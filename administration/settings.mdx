@@ -1,0 +1,232 @@
+---
+title: 'Settings'
+description: 'Configure and customize your Qanapi application settings'
+---
+
+# Application Settings
+
+The Settings section in Qanapi allows you to customize your organization's preferences, branding, and notifications. These settings apply to your entire organization across all projects.
+
+## Accessing Settings
+
+To access application settings:
+
+1. Log in to your Qanapi dashboard
+2. Click on **Settings** in the left navigation sidebar
+3. The Settings page displays various configuration options for your organization
+
+<Note>
+Only users with Administrator or Owner roles can access and modify organization settings.
+</Note>
+
+## Organization Profile
+
+The Organization Profile section allows you to update basic information about your organization:
+
+1. Navigate to the Settings page
+2. In the Organization Profile section, you can update:
+   - Organization name
+   - Organization description
+   - Industry
+   - Company size
+   - Primary contact information
+3. Click **Save Changes** to apply your updates
+
+## Branding Settings
+
+Customize the appearance of your Qanapi instance with your organization's branding:
+
+### Logo Customization
+
+1. Navigate to the Settings page
+2. Click on the **Branding** tab
+3. In the Logo section, click **Upload Logo**
+4. Select an image file (PNG or SVG recommended, maximum 1MB)
+5. Crop and adjust the logo as needed
+6. Click **Save**
+
+### Color Scheme
+
+1. In the Branding tab, scroll to the Color Scheme section
+2. Customize:
+   - Primary color (used for buttons, links, and highlights)
+   - Secondary color (used for secondary elements)
+   - Accent color (used for notifications and important elements)
+3. Preview your changes in real-time
+4. Click **Save Changes**
+
+### Email Template Customization
+
+1. In the Branding tab, scroll to the Email Templates section
+2. Customize:
+   - Email header logo
+   - Email footer text
+   - Email color scheme
+3. Preview your customizations
+4. Click **Save Changes**
+
+## Notification Settings
+
+Configure how and when notifications are sent to team members:
+
+1. Navigate to the Settings page
+2. Click on the **Notifications** tab
+3. Configure settings for different notification types:
+   - Project events (creation, updates, deletions)
+   - Team member events (invitations, role changes)
+   - Security events (login attempts, setting changes)
+   - Billing events (payment processing, subscription changes)
+4. For each notification type, set:
+   - Who receives notifications (all users, administrators only, specific users)
+   - Notification methods (in-app, email, webhook)
+   - Frequency (immediate, daily digest, weekly digest)
+5. Click **Save Changes**
+
+## Language & Localization
+
+Set your preferred language and date/time formats:
+
+1. Navigate to the Settings page
+2. Click on the **Localization** tab
+3. Configure:
+   - Default language
+   - Date format
+   - Time format
+   - Time zone
+   - Number format
+4. Click **Save Changes**
+
+<Note>
+These settings set the default for your organization, but individual users can override these settings in their personal preferences.
+</Note>
+
+## API Configuration
+
+Configure global settings for API usage:
+
+1. Navigate to the Settings page
+2. Click on the **API Settings** tab
+3. Configure:
+   - Default rate limiting
+   - CORS settings
+   - API version preferences
+   - Webhook retry settings
+4. Click **Save Changes**
+
+## Integration Settings
+
+Connect Qanapi with other services your organization uses:
+
+### Slack Integration
+
+1. Navigate to the Settings page
+2. Click on the **Integrations** tab
+3. In the Slack section, click **Connect**
+4. Follow the prompts to authorize Qanapi to connect with your Slack workspace
+5. Configure notification preferences for Slack
+6. Click **Save**
+
+### Jira Integration
+
+1. In the Integrations tab, go to the Jira section
+2. Click **Connect**
+3. Enter your Jira instance URL
+4. Provide authentication credentials or API token
+5. Test the connection
+6. Click **Save**
+
+### Webhook Configuration
+
+1. In the Integrations tab, go to the Webhooks section
+2. Click **Add Webhook**
+3. Configure:
+   - Webhook URL
+   - Events that trigger the webhook
+   - Secret key for verification
+   - Retry settings
+4. Test the webhook
+5. Click **Save**
+
+## User Defaults
+
+Set default settings for new users joining your organization:
+
+1. Navigate to the Settings page
+2. Click on the **User Defaults** tab
+3. Configure default settings for:
+   - Role assignment
+   - Project access
+   - 2FA requirements
+   - Session timeout
+   - Password complexity
+4. Click **Save Changes**
+
+## Data Retention
+
+Configure how long certain types of data are retained:
+
+1. Navigate to the Settings page
+2. Click on the **Data Retention** tab
+3. Set retention periods for:
+   - Event logs
+   - Login history
+   - Usage statistics
+   - Deleted projects
+4. Click **Save Changes**
+
+<Warning>
+Data retention settings may affect your compliance with various regulations. Consult with your compliance team before making changes.
+</Warning>
+
+## Export & Import Settings
+
+Transfer settings between environments or back up your configuration:
+
+### Exporting Settings
+
+1. Navigate to the Settings page
+2. Click on the **Export/Import** tab
+3. In the Export section, select which settings to export:
+   - Organization profile
+   - Branding
+   - Notification settings
+   - API configuration
+   - Integration settings
+4. Click **Export Settings**
+5. A JSON file will be downloaded with your configuration
+
+### Importing Settings
+
+1. In the Export/Import tab, go to the Import section
+2. Click **Choose File** and select a previously exported settings file
+3. Review the settings that will be imported
+4. Click **Import Settings**
+5. Confirm the import when prompted
+
+## Audit Log
+
+Review changes made to your organization settings:
+
+1. Navigate to the Settings page
+2. Click on the **Audit Log** tab
+3. View a chronological list of all changes made to settings, including:
+   - What was changed
+   - Who made the change
+   - When the change was made
+   - Previous and new values
+
+## Best Practices for Settings Management
+
+1. **Document your configuration** - Keep records of why particular settings were chosen
+2. **Test changes in non-production** - If using multiple environments, test setting changes in development first
+3. **Regularly review settings** - Periodically audit settings to ensure they still meet your needs
+4. **Limit access to settings** - Only grant settings access to users who need it
+5. **Export settings as backup** - Regularly export your settings as a backup
+
+## Next Steps
+
+After configuring your application settings:
+
+1. [Review Security & Logging](/administration/security-logging)
+2. [Manage Team Members](/administration/team-management)
+3. [Configure Billing Information](/administration/billing)

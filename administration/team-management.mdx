@@ -1,0 +1,162 @@
+---
+title: 'Team Management'
+description: 'Manage team members and their access to Qanapi'
+---
+
+# Team Management
+
+Qanapi provides comprehensive team management features that allow you to invite colleagues, assign roles, and control access to your organization's projects.
+
+## Team Overview
+
+To access team management features:
+
+1. Log in to your Qanapi dashboard
+2. Click on **Team** in the left navigation sidebar
+3. The Team page displays a list of all team members in your organization
+
+The Team page provides an overview of all team members, including:
+- Name
+- Email address
+- Role
+- Status (Active, Pending, Suspended)
+- Last login time
+
+## Team Member Roles
+
+Qanapi supports the following roles with different permissions:
+
+### Owner
+
+- Full access to all features and projects
+- Can invite and remove team members
+- Can change roles of team members
+- Can view and modify billing information
+- Can create, modify, and delete projects
+- Only one owner per organization
+
+### Administrator
+
+- Can invite and remove team members
+- Can create, modify, and delete projects
+- Can access all projects
+- Cannot access billing information
+- Cannot change the owner's role
+
+### Developer
+
+- Can access assigned projects
+- Can create and modify content within assigned projects
+- Cannot invite or remove team members
+- Cannot access billing information
+
+### Viewer
+
+- Read-only access to assigned projects
+- Cannot modify any content
+- Cannot invite or remove team members
+- Cannot access billing information
+
+## Inviting Team Members
+
+To invite a new team member:
+
+1. Navigate to the Team page
+2. Click the **Invite Team Member** button
+3. In the invitation form:
+   - Enter the email address of the person you're inviting
+   - Select the appropriate role
+   - Optionally, select specific projects to grant access to
+4. Click **Send Invitation**
+
+![Invite Team Member Form](/images/invite-team-member.png)
+
+<Note>
+Team members will receive an email invitation with instructions to join your organization. The invitation expires after 7 days.
+</Note>
+
+## Managing Project Access
+
+For Developer and Viewer roles, you can control access to specific projects:
+
+1. Navigate to the Team page
+2. Find the team member whose access you want to modify
+3. Click on the **Edit** (pencil icon) button
+4. In the Edit Team Member dialog:
+   - Check or uncheck projects to grant or revoke access
+   - Click **Save Changes** to apply your changes
+
+<Info>
+Administrators and Owners automatically have access to all projects.
+</Info>
+
+## Removing Team Members
+
+To remove a team member from your organization:
+
+1. Navigate to the Team page
+2. Find the team member you want to remove
+3. Click the **Remove** (trash icon) button next to their name
+4. Confirm the removal in the dialog that appears
+
+When a team member is removed:
+- They immediately lose access to your organization
+- They can no longer access any of your projects
+- Their pending actions are canceled
+- All API keys they've created continue to function
+
+## Changing a Team Member's Role
+
+To change a team member's role:
+
+1. Navigate to the Team page
+2. Find the team member whose role you want to change
+3. Click on the **Edit** (pencil icon) button
+4. In the Edit Team Member dialog:
+   - Select the new role from the dropdown menu
+   - Click **Save Changes** to apply the new role
+
+<Warning>
+Changing a team member's role can significantly alter their access permissions. Ensure you understand the implications before making changes.
+</Warning>
+
+## Transferring Ownership
+
+To transfer ownership of your organization:
+
+1. Navigate to the Team page
+2. Click on the **Transfer Ownership** button in the top right
+3. Select the team member who will become the new owner
+4. Confirm your decision by entering your password
+5. Click **Transfer Ownership**
+
+<Warning>
+Transferring ownership is a permanent action that cannot be easily reversed. The new owner will have complete control over the organization, including billing management and the ability to remove other team members.
+</Warning>
+
+## Pending Invitations
+
+To view and manage pending invitations:
+
+1. Navigate to the Team page
+2. Click on the **Pending Invitations** tab
+3. Here you can:
+   - View all pending invitations
+   - Resend an invitation by clicking the **Resend** button
+   - Cancel an invitation by clicking the **Cancel** button
+
+## Best Practices for Team Management
+
+1. **Assign appropriate roles** - Follow the principle of least privilege when assigning roles
+2. **Regularly review team access** - Periodically audit team members and their project access
+3. **Promptly remove departing team members** - Ensure departing employees no longer have access
+4. **Use project-specific access** - Limit access to only the projects that each team member needs
+5. **Document your team structure** - Maintain documentation of who has access to what
+
+## Next Steps
+
+After setting up your team:
+
+1. [Configure Billing Settings](/administration/billing)
+2. [Set Up Security & Logging](/administration/security-logging)
+3. [Review Project Settings](/project-management/overview)

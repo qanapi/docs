@@ -1,0 +1,104 @@
+---
+title: 'API Keys'
+description: 'Creating and managing API keys for your Qanapi projects'
+---
+
+# API Keys
+
+API keys are essential for authenticating your applications with the Qanapi service. They allow you to make secure API calls to encrypt, decrypt, and manage your data.
+
+## Creating an API Key
+
+To create a new API key for your project:
+
+1. Navigate to the project for which you want to create an API key
+2. Click on the **API Keys** tab in the project navigation
+3. Click on the **Create API Key** button
+4. A prompt will appear with a security notice, informing you that:
+   - The API key will only be displayed once
+   - You must store the key securely
+   - The key will be irretrievable after it is shown
+5. Click **Create API Key** to generate the new key
+
+![API Key Creation](/images/api-key-creation.png)
+
+<Warning>
+**Security Notice**: Your API key will only be displayed once immediately after creation. Make sure to copy it and store it in a secure location, as you won't be able to view it again. If you lose your API key, you'll need to create a new one.
+</Warning>
+
+## Managing API Keys
+
+The API Keys tab displays a list of all API keys created for your project, including:
+
+- **Key ID**: A unique identifier for the API key (not the full key)
+- **Creation Date**: When the API key was created
+- **Status**: Whether the key is active or has been revoked
+- **Last Used**: When the API key was last used
+
+### Revoking API Keys
+
+If you need to disable an API key (for example, if it has been compromised):
+
+1. Locate the key you want to revoke in the API Keys list
+2. Click the **Revoke** button next to the key
+3. Confirm the revocation when prompted
+
+<Info>
+Revoking an API key immediately prevents it from being used for authentication. Any applications using the revoked key will no longer be able to access the Qanapi API.
+</Info>
+
+## Using API Keys
+
+API keys are used in various Qanapi API calls and with the Smart Data Proxy:
+
+### API Authentication
+
+When making direct API calls to Qanapi, include your API key in the request header:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/api/v1/encrypt' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'Content-Type: application/json' \
+--data '{"data": "Your sensitive data"}'
+```
+
+### Data Proxy Authentication
+
+When using the Smart Data Proxy, include your API key in the `X-Qanapi-Authorization` header:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: title,body' \
+--header 'Content-Type: application/json' \
+--data '{"title": "Sensitive title", "body": "Sensitive body text"}'
+```
+
+## API Key Best Practices
+
+To ensure the security of your API keys and data:
+
+1. **Never hardcode API keys** in your application source code
+2. **Don't commit API keys** to version control systems
+3. **Use environment variables** or secure key management systems to store API keys
+4. **Create separate API keys** for different applications or environments
+5. **Rotate API keys** periodically for enhanced security
+6. **Monitor API key usage** through the Event Log
+7. **Revoke unused or compromised keys** immediately
+
+## API Key Limitations
+
+Be aware of the following limitations:
+
+- You can create up to 10 active API keys per project (contact support if you need more)
+- API keys are specific to a project and cannot be used across different projects
+- API key requests are rate-limited for security purposes
+
+## Next Steps
+
+After creating your API keys, you should:
+
+1. [Set Up Data Classifications](/project-management/data-classifications)
+2. [Configure Data Proxies](/api/data-proxies/overview)
+3. [Encrypt and Decrypt Data](/api/data-proxies/encryption)

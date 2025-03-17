@@ -1,0 +1,145 @@
+---
+title: 'Decrypting Data'
+description: 'How to decrypt data using Qanapi Smart Data Proxies'
+---
+
+# Decrypting Data with Smart Data Proxies
+
+This guide explains how to use the Qanapi Smart Data Proxy to decrypt previously encrypted data.
+
+## Decryption Process Overview
+
+When you decrypt data with the Smart Data Proxy:
+
+1. Your application sends a JSON payload containing encrypted data to your project's proxy endpoint
+2. You specify which fields to decrypt using the `X-Qanapi-Fields` header
+3. Qanapi authenticates your request and decrypts the specified fields
+4. The decrypted data is returned in the same structure, with plaintext values replacing the encrypted values
+
+## Basic Decryption Request
+
+Here's a basic example of how to decrypt data using the Smart Data Proxy:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: decrypt' \
+--header 'X-Qanapi-Fields: title,body' \
+--header 'Content-Type: application/json' \
+--data '{
+  "userId": 1,
+  "id": 1,
+  "title": "qanapi:bm9uZQ:MDFqNDRrZmJmenkyc3ZqbTg1NG5qYng2d2c:dHFkY1Q1MW81Y1hLcTRCdkxibG1DK3NoMnF0ZFE3OFVIa3REbFZwVGpmQT0:$",
+  "body": "qanapi:bm9uZQ:MDFqNDRrZmJnOWN4ejYwcHFxOWo3c3huYXE:dzlTdlYwVkNVK0xmVXUwM2JLT2xGQi9rbHF4R1l0MWxCZlR5QlNqeHpZUT0:$"
+}'
+```
+
+## Understanding the Headers
+
+For decryption requests, you need to include these headers:
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `X-Qanapi-Authorization` | `your_api_key` | Your API key for authentication |
+| `X-Qanapi-Mode` | `decrypt` | Specifies that you want to decrypt data |
+| `X-Qanapi-Fields` | `title,body` | Comma-separated list of field names to decrypt |
+| `Content-Type` | `application/json` | Specifies that the payload is JSON |
+
+## Optional Headers for Decryption
+
+You can also include these optional headers:
+
+| Header | Example Value | Description |
+|--------|---------------|-------------|
+| `X-Qanapi-Classification` | `cui` | Verifies that the data has the specified classification |
+| `X-Qanapi-Destination` | `https://example.com/api` | Forwards the decrypted data to this URL |
+
+## Sample Response
+
+When decrypting data, the response will contain the original JSON structure with the specified encrypted fields replaced by their plaintext values:
+
+```json
+{
+  "userId": 1,
+  "id": 1,
+  "title": "Title text to encrypt",
+  "body": "Bunch of Body text to encrypt"
+}
+```
+
+## Decrypting Nested JSON Objects
+
+You can decrypt fields within nested JSON objects by using dot notation in the `X-Qanapi-Fields` header:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: decrypt' \
+--header 'X-Qanapi-Fields: user.name,user.email,payment.cardNumber' \
+--header 'Content-Type: application/json' \
+--data '{
+    "orderId": "12345",
+    "user": {
+        "name": "qanapi:bm9uZQ:MDFqNDRrZmJmenkyc3ZqbTg1NG5qYng2d2c:dHFkY1Q1MW81Y1hLcTRCdkxibG1DK3NoMnF0ZFE3OFVIa3REbFZwVGpmQT0:$",
+        "email": "qanapi:bm9uZQ:MDFqNDRrZmJnOWN4ejYwcHFxOWo3c3huYXE:dzlTdlYwVkNVK0xmVXUwM2JLT2xGQi9rbHF4R1l0MWxCZlR5QlNqeHpZUT0:$",
+        "role": "customer"
+    },
+    "payment": {
+        "cardNumber": "qanapi:bm9uZQ:MDFqNDRrZmJnOWN4ejYwcHFxOWo3c3huYXE:dzlTdlYwVkNVK0xmVXUwM2JLT2xGQi9rbHF4R1l0MWxCZlR5QlNqeHpZUT0:$",
+        "expiryDate": "12/25"
+    }
+}'
+```
+
+## Access Control and Classification Verification
+
+When decrypting data, Qanapi verifies:
+
+1. **Authentication**: Your API key must be valid
+2. **Authorization**: Your API key must have permission to decrypt the data
+3. **Classification**: If you specify a classification in the request, it must match the classification assigned during encryption
+
+If any of these checks fail, the decryption request will be denied.
+
+## Handling Partially Encrypted Data
+
+Your payload may contain a mix of encrypted and plaintext fields. The Smart Data Proxy will only attempt to decrypt the fields specified in the `X-Qanapi-Fields` header:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: decrypt' \
+--header 'X-Qanapi-Fields: ssn' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "Jane Smith",
+    "ssn": "qanapi:bm9uZQ:MDFqNDRrZmJmenkyc3ZqbTg1NG5qYng2d2c:dHFkY1Q1MW81Y1hLcTRCdkxibG1DK3NoMnF0ZFE3OFVIa3REbFZwVGpmQT0:$",
+    "email": "jane@example.com"
+}'
+```
+
+## Error Handling
+
+Common errors when decrypting data include:
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| 401 | Unauthorized | Check your API key |
+| 400 | Bad Request | Ensure your JSON is valid and fields are correctly specified |
+| 403 | Forbidden | You don't have permission to decrypt this data |
+| 422 | Unprocessable Entity | The data format may be incorrect or corrupted |
+| 429 | Too Many Requests | You've exceeded the rate limit, wait and try again |
+
+## Best Practices for Decryption
+
+1. **Decrypt only when necessary** - Only decrypt data when it needs to be used in plaintext
+2. **Verify classifications** - Use the classification verification to ensure data integrity
+3. **Secure your environment** - Ensure your application environment is secure when handling decrypted data
+4. **Implement proper error handling** - Handle decryption errors gracefully in your application
+5. **Clear decrypted data** - Remove decrypted sensitive data from memory when no longer needed
+
+## Next Steps
+
+- [Learn about forwarding encrypted/decrypted data](/api/data-proxies/forwarding)
+- [Explore language-specific examples](/api/examples/python)
+- [Set up log destinations for security monitoring](/administration/log-destinations)

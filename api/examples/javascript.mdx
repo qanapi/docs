@@ -1,0 +1,484 @@
+---
+title: 'JavaScript Examples'
+description: 'Using Qanapi Smart Data Proxies with JavaScript and Node.js'
+---
+
+# JavaScript Examples
+
+This page provides practical examples of how to use the Qanapi Smart Data Proxy with JavaScript for both browser and Node.js environments.
+
+## Node.js Examples
+
+### Setup
+
+For Node.js applications, first install the `axios` package:
+
+```bash
+npm install axios
+```
+
+### Basic Data Encryption
+
+Encrypt specific fields in a JSON payload:
+
+```javascript
+const axios = require('axios');
+
+// Your Qanapi configuration
+const tenantUrl = 'https://your-tenant.qanapi.cloud';
+const projectId = 'your-project-id';
+const apiKey = 'your-api-key';
+
+// Data to encrypt
+const data = {
+  name: 'John Smith',
+  email: 'john@example.com',
+  ssn: '123-45-6789',
+  dob: '1980-01-01',
+  address: '123 Main St'
+};
+
+// Make the request
+axios({
+  method: 'post',
+  url: `${tenantUrl}/proxy/${projectId}`,
+  headers: {
+    'X-Qanapi-Authorization': apiKey,
+    'X-Qanapi-Mode': 'encrypt',
+    'X-Qanapi-Fields': 'ssn,dob',
+    'Content-Type': 'application/json'
+  },
+  data: data
+})
+  .then(response => {
+    console.log('Encrypted data:');
+    console.log(JSON.stringify(response.data, null, 2));
+  })
+  .catch(error => {
+    console.error('Error encrypting data:', error.response ? error.response.data : error.message);
+  });
+```
+
+### Encrypting with Classification
+
+Encrypt data with a classification tag:
+
+```javascript
+const axios = require('axios');
+
+// Your Qanapi configuration
+const tenantUrl = 'https://your-tenant.qanapi.cloud';
+const projectId = 'your-project-id';
+const apiKey = 'your-api-key';
+
+// Payment data to encrypt
+const data = {
+  customerId: 'cust_12345',
+  cardNumber: '4111111111111111',
+  cvv: '123',
+  expiryDate: '12/25'
+};
+
+// Make the request
+axios({
+  method: 'post',
+  url: `${tenantUrl}/proxy/${projectId}`,
+  headers: {
+    'X-Qanapi-Authorization': apiKey,
+    'X-Qanapi-Mode': 'encrypt',
+    'X-Qanapi-Fields': 'cardNumber,cvv',
+    'X-Qanapi-Classification': 'financial',
+    'Content-Type': 'application/json'
+  },
+  data: data
+})
+  .then(response => {
+    console.log('Encrypted data with classification:');
+    console.log(JSON.stringify(response.data, null, 2));
+  })
+  .catch(error => {
+    console.error('Error encrypting data:', error.response ? error.response.data : error.message);
+  });
+```
+
+### Decrypting Data
+
+Decrypt previously encrypted fields:
+
+```javascript
+const axios = require('axios');
+
+// Your Qanapi configuration
+const tenantUrl = 'https://your-tenant.qanapi.cloud';
+const projectId = 'your-project-id';
+const apiKey = 'your-api-key';
+
+// Data with encrypted fields
+const encryptedData = {
+  name: 'John Smith',
+  email: 'john@example.com',
+  ssn: 'qanapi:bm9uZQ:MDFqNDRrZmJmenkyc3ZqbTg1NG5qYng2d2c:dHFkY1Q1MW81Y1hLcTRCdkxibG1DK3NoMnF0ZFE3OFVIa3REbFZwVGpmQT0:$',
+  dob: 'qanapi:bm9uZQ:MDFqNDRrZmJnOWN4ejYwcHFxOWo3c3huYXE:dzlTdlYwVkNVK0xmVXUwM2JLT2xGQi9rbHF4R1l0MWxCZlR5QlNqeHpZUT0:$',
+  address: '123 Main St'
+};
+
+// Make the request
+axios({
+  method: 'post',
+  url: `${tenantUrl}/proxy/${projectId}`,
+  headers: {
+    'X-Qanapi-Authorization': apiKey,
+    'X-Qanapi-Mode': 'decrypt',
+    'X-Qanapi-Fields': 'ssn,dob',
+    'Content-Type': 'application/json'
+  },
+  data: encryptedData
+})
+  .then(response => {
+    console.log('Decrypted data:');
+    console.log(JSON.stringify(response.data, null, 2));
+  })
+  .catch(error => {
+    console.error('Error decrypting data:', error.response ? error.response.data : error.message);
+  });
+```
+
+### Encrypting and Forwarding
+
+Encrypt data and forward it to another service:
+
+```javascript
+const axios = require('axios');
+
+// Your Qanapi configuration
+const tenantUrl = 'https://your-tenant.qanapi.cloud';
+const projectId = 'your-project-id';
+const apiKey = 'your-api-key';
+
+// Data to encrypt and forward
+const data = {
+  title: 'Sensitive title',
+  body: 'Sensitive body content',
+  userId: 1
+};
+
+// Destination service
+const destinationUrl = 'https://jsonplaceholder.typicode.com/posts';
+
+// Make the request
+axios({
+  method: 'post',
+  url: `${tenantUrl}/proxy/${projectId}`,
+  headers: {
+    'X-Qanapi-Authorization': apiKey,
+    'X-Qanapi-Mode': 'encrypt',
+    'X-Qanapi-Fields': 'title,body',
+    'X-Qanapi-Destination': destinationUrl,
+    'Content-Type': 'application/json'
+  },
+  data: data
+})
+  .then(response => {
+    console.log('Response from forwarded request:');
+    console.log(JSON.stringify(response.data, null, 2));
+  })
+  .catch(error => {
+    console.error('Error in forwarded request:', error.response ? error.response.data : error.message);
+  });
+```
+
+### Creating a Reusable Qanapi Client
+
+For convenience, you can create a reusable client class:
+
+```javascript
+const axios = require('axios');
+
+class QanapiClient {
+  constructor(tenantUrl, projectId, apiKey) {
+    this.tenantUrl = tenantUrl;
+    this.projectId = projectId;
+    this.apiKey = apiKey;
+    this.proxyUrl = `${tenantUrl}/proxy/${projectId}`;
+  }
+
+  /**
+   * Encrypt specified fields in the data
+   * 
+   * @param {Object} data - The data to encrypt
+   * @param {String} fields - Comma-separated list of fields to encrypt
+   * @param {String} classification - Optional classification tag
+   * @param {String} destination - Optional URL to forward the encrypted data
+   * @returns {Promise} - Promise resolving to the response data
+   */
+  async encrypt(data, fields, classification = null, destination = null) {
+    const headers = {
+      'X-Qanapi-Authorization': this.apiKey,
+      'X-Qanapi-Mode': 'encrypt',
+      'X-Qanapi-Fields': fields,
+      'Content-Type': 'application/json'
+    };
+
+    if (classification) {
+      headers['X-Qanapi-Classification'] = classification;
+    }
+
+    if (destination) {
+      headers['X-Qanapi-Destination'] = destination;
+    }
+
+    try {
+      const response = await axios({
+        method: 'post',
+        url: this.proxyUrl,
+        headers: headers,
+        data: data
+      });
+      
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response ? JSON.stringify(error.response.data) : error.message);
+    }
+  }
+
+  /**
+   * Decrypt specified fields in the data
+   * 
+   * @param {Object} data - The data containing encrypted fields
+   * @param {String} fields - Comma-separated list of fields to decrypt
+   * @param {String} destination - Optional URL to forward the decrypted data
+   * @returns {Promise} - Promise resolving to the response data
+   */
+  async decrypt(data, fields, destination = null) {
+    const headers = {
+      'X-Qanapi-Authorization': this.apiKey,
+      'X-Qanapi-Mode': 'decrypt',
+      'X-Qanapi-Fields': fields,
+      'Content-Type': 'application/json'
+    };
+
+    if (destination) {
+      headers['X-Qanapi-Destination'] = destination;
+    }
+
+    try {
+      const response = await axios({
+        method: 'post',
+        url: this.proxyUrl,
+        headers: headers,
+        data: data
+      });
+      
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response ? JSON.stringify(error.response.data) : error.message);
+    }
+  }
+}
+
+// Usage example
+async function main() {
+  try {
+    // Initialize the client
+    const client = new QanapiClient(
+      'https://your-tenant.qanapi.cloud',
+      'your-project-id',
+      'your-api-key'
+    );
+    
+    // Data to encrypt
+    const userData = {
+      name: 'John Smith',
+      ssn: '123-45-6789',
+      email: 'john@example.com'
+    };
+    
+    // Encrypt data
+    console.log('Encrypting data...');
+    const encryptedData = await client.encrypt(
+      userData,
+      'ssn',
+      'pii'
+    );
+    console.log('Encrypted data:');
+    console.log(JSON.stringify(encryptedData, null, 2));
+    
+    // Decrypt data
+    console.log('\nDecrypting data...');
+    const decryptedData = await client.decrypt(
+      encryptedData,
+      'ssn'
+    );
+    console.log('Decrypted data:');
+    console.log(JSON.stringify(decryptedData, null, 2));
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+}
+
+main();
+```
+
+## Browser Examples
+
+### Using Fetch API
+
+For browser applications, you can use the Fetch API:
+
+```javascript
+// Your Qanapi configuration
+const tenantUrl = 'https://your-tenant.qanapi.cloud';
+const projectId = 'your-project-id';
+const apiKey = 'your-api-key';
+
+// Data to encrypt
+const data = {
+  name: 'John Smith',
+  email: 'john@example.com',
+  ssn: '123-45-6789',
+  dob: '1980-01-01'
+};
+
+// Make the request
+fetch(`${tenantUrl}/proxy/${projectId}`, {
+  method: 'POST',
+  headers: {
+    'X-Qanapi-Authorization': apiKey,
+    'X-Qanapi-Mode': 'encrypt',
+    'X-Qanapi-Fields': 'ssn,dob',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(data)
+})
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(errorData => {
+        throw new Error(JSON.stringify(errorData));
+      });
+    }
+    return response.json();
+  })
+  .then(encryptedData => {
+    console.log('Encrypted data:');
+    console.log(JSON.stringify(encryptedData, null, 2));
+  })
+  .catch(error => {
+    console.error('Error encrypting data:', error);
+  });
+```
+
+### Using Async/Await with Fetch
+
+A cleaner approach using async/await:
+
+```javascript
+// Your Qanapi configuration
+const tenantUrl = 'https://your-tenant.qanapi.cloud';
+const projectId = 'your-project-id';
+const apiKey = 'your-api-key';
+
+async function encryptData() {
+  // Data to encrypt
+  const data = {
+    name: 'John Smith',
+    email: 'john@example.com',
+    ssn: '123-45-6789',
+    dob: '1980-01-01'
+  };
+
+  try {
+    // Make the request
+    const response = await fetch(`${tenantUrl}/proxy/${projectId}`, {
+      method: 'POST',
+      headers: {
+        'X-Qanapi-Authorization': apiKey,
+        'X-Qanapi-Mode': 'encrypt',
+        'X-Qanapi-Fields': 'ssn,dob',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(JSON.stringify(errorData));
+    }
+
+    const encryptedData = await response.json();
+    console.log('Encrypted data:');
+    console.log(JSON.stringify(encryptedData, null, 2));
+    
+    return encryptedData;
+  } catch (error) {
+    console.error('Error encrypting data:', error);
+    throw error;
+  }
+}
+
+// Call the function
+encryptData()
+  .then(encryptedData => {
+    // Do something with the encrypted data
+  })
+  .catch(error => {
+    // Handle any errors
+  });
+```
+
+## Error Handling
+
+Proper error handling is important when working with the Qanapi API:
+
+```javascript
+const axios = require('axios');
+
+// Your Qanapi configuration
+const tenantUrl = 'https://your-tenant.qanapi.cloud';
+const projectId = 'your-project-id';
+const apiKey = 'your-api-key';
+
+// Data to encrypt
+const data = {
+  name: 'John Smith',
+  ssn: '123-45-6789'
+};
+
+axios({
+  method: 'post',
+  url: `${tenantUrl}/proxy/${projectId}`,
+  headers: {
+    'X-Qanapi-Authorization': apiKey,
+    'X-Qanapi-Mode': 'encrypt',
+    'X-Qanapi-Fields': 'ssn',
+    'Content-Type': 'application/json'
+  },
+  data: data
+})
+  .then(response => {
+    console.log('Encrypted data:');
+    console.log(JSON.stringify(response.data, null, 2));
+  })
+  .catch(error => {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Error status:', error.response.status);
+      console.error('Error data:', error.response.data);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received:', error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Error message:', error.message);
+    }
+    console.error('Error config:', error.config);
+  });
+```
+
+## Next Steps
+
+For more detailed examples and information:
+- See [cURL Examples](/api/examples/curl)
+- See [Python Examples](/api/examples/python)
+- Learn about [Encrypting Data](/api/data-proxies/encryption)
+- Learn about [Decrypting Data](/api/data-proxies/decryption)

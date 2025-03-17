@@ -1,0 +1,101 @@
+---
+title: 'Project Overview'
+description: 'Understanding and managing your Qanapi projects'
+---
+
+# Project Overview & Management
+
+After creating a new project, you are directed to the Project Overview page. This page provides a summary of your project configuration and a step-by-step guide to help you complete your project setup.
+
+## Project Overview Page
+
+The Project Overview page displays:
+
+- **Project Name and Environment**: The name and environment (Development, Staging, or Production) of your project
+- **Project ID**: A unique identifier for your project, used in API calls
+- **Creation Date**: When the project was created
+- **Datacenter**: Where your project data is stored
+- **Encryption Strategy**: The encryption method used for this project
+- **Additional Features**: Any additional security features enabled for this project
+
+## Project Configuration Steps
+
+The overview page presents a guided setup process with the following steps:
+
+1. **Create Project** ✓
+   - You've already configured your new Qanapi project.
+
+2. **Create an API Key**
+   - API keys allow you to authenticate and use the Qanapi API.
+   - Click on the API Keys tab or the corresponding button to create your first API key.
+
+3. **Create Data Classifications**
+   - Choose your data classifications to associate them with your sensitive data.
+   - Click on the Classifications tab to set up your classification tags.
+
+4. **Data Proxies**
+   - Use the Data Proxy to easily encrypt and forward HTTP requests.
+   - The Data Proxies tab shows your project-specific endpoint URLs.
+
+## Project Tabs
+
+Your project has several tabs that allow you to configure different aspects:
+
+### API Keys Tab
+
+The [API Keys](/project-management/api-keys) tab allows you to create and manage API keys for your project.
+
+### Classifications Tab
+
+The [Data Classifications](/project-management/data-classifications) tab lets you create and manage data classification tags.
+
+### Data Proxies Tab
+
+The [Data Proxies](/api/data-proxies/overview) tab provides information about your project's data proxy endpoints, which are used for encrypting and decrypting data.
+
+### Log Destinations Tab
+
+The [Log Destinations](/administration/log-destinations) tab allows you to configure where the logs for your project should be sent, including integration with SIEM tools.
+
+### Event Log Tab
+
+The [Event Log](/administration/event-log) tab displays all events related to your project, providing a complete audit trail.
+
+## Project Settings
+
+While viewing a project, you can access project settings by clicking the settings icon in the top-right corner of the project page. This allows you to:
+
+- Update the project name
+- View datacenter and configuration details
+- Configure additional security features
+- Archive or delete the project
+
+<Warning>
+Archiving or deleting a project will impact access to data encrypted with that project's keys. Make sure you have properly decrypted any necessary data before taking these actions.
+</Warning>
+
+## Managing Multiple Projects
+
+If you have multiple projects, you can:
+
+1. Return to the Projects page by clicking "Projects" in the left sidebar
+2. Switch between projects using the project selector dropdown when already in a project
+3. Filter and search for specific projects on the Projects page
+
+## Best Practices
+
+For effective project management in Qanapi:
+
+- Use clear, descriptive project names
+- Create separate projects for different environments (Development, Staging, Production)
+- Use different data classifications for varying sensitivity levels
+- Regularly review API key usage
+- Monitor the Event Log for unusual activity
+
+## Next Steps
+
+After understanding your project overview, you should:
+
+1. [Create API Keys](/project-management/api-keys)
+2. [Set Up Data Classifications](/project-management/data-classifications)
+3. [Configure Data Proxies](/api/data-proxies/overview)

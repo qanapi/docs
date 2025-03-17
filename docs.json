@@ -11,45 +11,99 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Getting Started",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Overview",
             "pages": [
               "introduction",
-              "quickstart",
-              "development"
+              "quickstart"
             ]
           },
           {
-            "group": "Essentials",
+            "group": "Registration & Setup",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
+              "getting-started/registration",
+              "getting-started/dashboard-navigation",
+              "getting-started/creating-projects"
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "Project Management",
         "groups": [
           {
-            "group": "API Documentation",
+            "group": "Project Overview",
             "pages": [
-              "api-reference/introduction"
+              "project-management/overview"
             ]
           },
           {
-            "group": "Endpoint Examples",
+            "group": "API Keys",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "project-management/api-keys"
+            ]
+          },
+          {
+            "group": "Data Classification",
+            "pages": [
+              "project-management/data-classifications"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API & Data Proxies",
+        "groups": [
+          {
+            "group": "Smart Data Proxies",
+            "pages": [
+              "api/data-proxies/overview",
+              "api/data-proxies/encryption",
+              "api/data-proxies/decryption",
+              "api/data-proxies/forwarding"
+            ]
+          },
+          {
+            "group": "Usage Examples",
+            "pages": [
+              "api/examples/curl",
+              "api/examples/python",
+              "api/examples/javascript"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Administration",
+        "groups": [
+          {
+            "group": "Team Management",
+            "pages": [
+              "administration/team-management"
+            ]
+          },
+          {
+            "group": "Billing",
+            "pages": [
+              "administration/billing"
+            ]
+          },
+          {
+            "group": "Security & Logging",
+            "pages": [
+              "administration/security-log",
+              "administration/log-destinations",
+              "administration/event-log"
+            ]
+          },
+          {
+            "group": "Settings",
+            "pages": [
+              "administration/application-settings",
+              "administration/templates",
+              "administration/my-account"
             ]
           }
         ]
@@ -58,19 +112,19 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "Website",
+          "href": "https://www.qanapi.com",
+          "icon": "globe"
         },
         {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
+          "anchor": "Dashboard",
+          "href": "https://qanapi.cloud",
+          "icon": "chart-line"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "GitHub",
+          "href": "https://github.com/qanapi",
+          "icon": "github"
         }
       ]
     }
@@ -83,20 +137,18 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:support@qanapi.com"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://qanapi.cloud"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "linkedin": "https://www.linkedin.com/company/qanapi"
     }
   }
 }

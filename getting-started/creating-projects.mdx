@@ -1,0 +1,91 @@
+---
+title: 'Creating Projects'
+description: 'Learn how to create and configure new projects in Qanapi'
+---
+
+# Creating a New Project
+
+Projects are the foundation of your work with Qanapi. Each project can have its own encryption strategy, API keys, data classifications, and configuration settings.
+
+## Navigating to the Projects Page
+
+1. Log in to your Qanapi dashboard
+2. In the left-hand sidebar, click on **Projects** to view and manage your projects
+3. If you've just created your account, the Projects page will be empty
+
+## Creating Your First Project
+
+To create a new project:
+
+1. Click on the **New Project** button located in the center of the Projects page
+2. A popout form will appear where you can configure the details of your new project
+
+![New Project Form](/images/new-project-form.png)
+
+## Project Configuration Options
+
+When creating a new project, you'll need to specify several important settings:
+
+### Basic Settings
+
+- **Project Name**: Enter a unique name for your project (e.g., "Example project")
+- **Environment**: Select the appropriate environment from the dropdown
+  - **Development** - For testing and development work
+  - **Staging** - For pre-production testing
+  - **Production** - For live, production applications
+  
+<Warning>
+Environments cannot be modified after creation, so choose carefully based on your intended use.
+</Warning>
+
+### Infrastructure Settings
+
+- **Datacenter**: Choose the datacenter where your project data will be stored
+  - Example: "GCP us-central1 (Council Bluffs, Iowa)"
+  
+- **Qanapi Engine Configuration**:
+  - **Cloud (Fully Managed)**: The default option where Qanapi manages the infrastructure
+  - **Custom**: If selected, you can enter a Fully Qualified Domain Name (FQDN) or IP address where you want the Qanapi engine to be configured
+
+### Security Settings
+
+- **Encryption Strategy**:
+  - **AES-256**: FIPS 140-2 and quantum-resistant, Symmetric encryption
+  - **RSA-2048**: Quantum-resistant and BYO key, Asymmetric encryption
+  - **RSA-4096**: Quantum-resistant and BYO key, Asymmetric encryption
+
+- **Additional Functions**:
+  - **Cloud HSM**: Toggle this option if you want your master key to be managed using a Hardware Security Module (HSM)
+  - **Malicious Payload Scanning**: This option is enabled by default, scanning data for malicious content
+  - **AI Content Detection**: Detects AI-generated content
+  - **AI Insights**: Provides transaction insights using the Llama 2 model
+
+## Finalizing Your Project
+
+After filling out all the necessary fields, click the **Create** button to finalize and create your new project.
+
+Once created, you'll be automatically directed to the Project Overview page where you can continue configuring your project by:
+
+1. Creating API keys
+2. Setting up data classifications
+3. Configuring data proxies
+4. Setting up log destinations
+
+## Project Management
+
+After creation, you can manage your project through several tabs:
+
+- **Overview**: General project information and setup progress
+- **API Keys**: Manage API keys for authentication
+- **Classifications**: Create and manage data classification tags
+- **Data Proxies**: View and configure your project's data proxy endpoints
+- **Log Destinations**: Configure where project logs are sent
+- **Event Log**: View all events related to your project
+
+## Next Steps
+
+Now that you've created your project, you should:
+
+1. [Create an API Key](/project-management/api-keys)
+2. [Set Up Data Classifications](/project-management/data-classifications)
+3. [Configure Data Proxies](/api/data-proxies/overview)

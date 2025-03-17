@@ -1,0 +1,125 @@
+---
+title: 'Forwarding Requests'
+description: 'How to forward encrypted or decrypted data to third-party services using Qanapi Smart Data Proxies'
+---
+
+# Forwarding Data with Smart Data Proxies
+
+One of the most powerful features of Qanapi Smart Data Proxies is the ability to automatically forward your encrypted or decrypted data to third-party services. This simplifies integrations and ensures sensitive data is always protected in transit.
+
+## How Forwarding Works
+
+When you use the forwarding feature:
+
+1. Your application sends a request to the Qanapi Smart Data Proxy
+2. Qanapi processes the data (encrypts or decrypts specified fields)
+3. The proxy forwards the processed request to your specified destination
+4. The destination's response is returned to your application through Qanapi
+
+This flow allows Qanapi to act as a transparent security layer between your application and third-party services.
+
+## Forwarding Encrypted Data
+
+To forward encrypted data to a third-party service:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: title,body' \
+--header 'X-Qanapi-Destination: https://jsonplaceholder.typicode.com/posts' \
+--header 'Content-Type: application/json' \
+--data '{
+    "title": "Sensitive title",
+    "body": "Sensitive body content",
+    "userId": 1
+}'
+```
+
+In this example, Qanapi will:
+1. Encrypt the `title` and `body` fields
+2. Forward the modified request with encrypted fields to `https://jsonplaceholder.typicode.com/posts`
+3. Return the response from the destination to your application
+
+## Request Methods and Headers
+
+The Smart Data Proxy preserves the HTTP method of your original request when forwarding. For example:
+
+- If you make a `POST` request to Qanapi, it will forward a `POST` request to the destination
+- If you make a `GET` request to Qanapi, it will forward a `GET` request to the destination
+
+All headers from your original request (except Qanapi-specific headers) are also forwarded to the destination.
+
+## Forwarding with Authentication
+
+You can include authentication headers for the destination service in your request to Qanapi. These will be forwarded along with the encrypted data:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: payment.cardNumber,payment.cvv' \
+--header 'X-Qanapi-Destination: https://api.payment-processor.com/charge' \
+--header 'Authorization: Bearer destination-api-token' \
+--header 'Content-Type: application/json' \
+--data '{
+    "customerId": "cust_12345",
+    "payment": {
+        "cardNumber": "4111111111111111",
+        "cvv": "123",
+        "expiryDate": "12/25"
+    },
+    "amount": 99.99
+}'
+```
+
+## Processing the Destination Response
+
+The response from the destination service is returned to your application as-is. If the destination returns encrypted data, you can make a separate request to Qanapi to decrypt it if needed.
+
+## Conditional Forwarding Based on Response
+
+For more complex scenarios, you may want to process the response from a destination before returning it to your application. This can be achieved by using separate API calls:
+
+1. First, encrypt the sensitive data
+2. Then, make a direct request to the destination service with the encrypted data
+3. Finally, decrypt any encrypted data in the response if needed
+
+## Handling Errors in Forwarded Requests
+
+If there's an error in forwarding your request:
+
+- If the error occurs during encryption/decryption, Qanapi will return an error response directly
+- If the error occurs when communicating with the destination service, Qanapi will return the error response from the destination
+
+## Security Considerations for Forwarding
+
+When using the forwarding feature:
+
+1. **Only use HTTPS destinations** - Ensure destination URLs use HTTPS for secure transmission
+2. **Be cautious with sensitive headers** - Any headers you include will be forwarded
+3. **Monitor forwarded requests** - Use the Qanapi Event Log to track forwarded requests
+4. **Validate destination URLs** - Only forward to trusted destination services
+
+## Response Format
+
+The response from a forwarded request includes:
+
+- The status code from the destination service
+- All headers from the destination service
+- The body of the response from the destination service
+
+## Use Cases for Forwarding
+
+Forwarding is particularly useful for:
+
+- **API Integrations**: Securely integrate with third-party APIs while protecting sensitive data
+- **Microservices**: Add a security layer between your microservices
+- **Legacy System Integration**: Add encryption to legacy systems without modifying them
+- **Regulated Data**: Ensure compliance when sending regulated data to external services
+
+## Next Steps
+
+- [View encryption examples](/api/data-proxies/encryption)
+- [Explore decryption options](/api/data-proxies/decryption)
+- [Check out language-specific examples](/api/examples/javascript)

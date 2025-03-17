@@ -1,0 +1,252 @@
+---
+title: 'Security & Logging'
+description: 'Configure security settings and logging capabilities in Qanapi'
+---
+
+# Security & Logging
+
+Qanapi provides comprehensive security features and detailed logging capabilities to help you protect your data and maintain compliance with regulatory requirements.
+
+## Security Features
+
+### Accessing Security Settings
+
+To access security settings:
+
+1. Log in to your Qanapi dashboard
+2. Click on **Security** in the left navigation sidebar
+3. The Security page displays various security settings and features for your organization
+
+## Authentication Settings
+
+### Two-Factor Authentication (2FA)
+
+Qanapi supports multiple 2FA methods to enhance account security:
+
+#### Enabling 2FA for Your Account
+
+1. Navigate to your Profile Settings by clicking on your name in the top-right corner
+2. Select the **Security** tab
+3. Click **Enable Two-Factor Authentication**
+4. Choose your preferred 2FA method:
+   - Authenticator App (Google Authenticator, Authy, etc.)
+   - SMS Verification
+   - Email Verification
+   - Security Key (WebAuthn/FIDO2)
+5. Follow the on-screen instructions to complete the setup
+
+#### Requiring 2FA for All Team Members
+
+As an Administrator or Owner, you can require 2FA for all team members:
+
+1. Navigate to the Security page
+2. In the Two-Factor Authentication section, toggle on **Require 2FA for all users**
+3. Choose whether to give users a grace period to set up 2FA
+4. Click **Save Changes**
+
+### Single Sign-On (SSO)
+
+For Enterprise customers, Qanapi supports SSO integration with popular identity providers:
+
+#### Configuring SSO
+
+1. Navigate to the Security page
+2. In the Single Sign-On section, click **Configure SSO**
+3. Select your identity provider:
+   - Okta
+   - Azure AD
+   - Google Workspace
+   - OneLogin
+   - Custom SAML 2.0
+4. Follow the provider-specific setup instructions
+5. Validate the configuration with a test login
+6. Enable SSO for your organization
+
+### Session Management
+
+Control user session duration and provide options for session termination:
+
+1. Navigate to the Security page
+2. In the Session Management section, configure:
+   - Session timeout (1 hour to 2 weeks)
+   - Concurrent session limits
+   - Auto-logout on browser close
+3. Click **Save Changes**
+
+## API Security
+
+### API Key Management
+
+Control API key creation and usage:
+
+1. Navigate to the Security page
+2. In the API Security section, configure:
+   - Maximum API keys per project
+   - API key expiration policy
+   - IP restrictions for API access
+3. Click **Save Changes**
+
+### API Rate Limiting
+
+Prevent abuse by configuring rate limits:
+
+1. Navigate to the Security page
+2. In the Rate Limiting section, configure:
+   - Request limits per minute/hour/day
+   - Custom rate limits by project or API key
+   - Rate limit response behavior
+3. Click **Save Changes**
+
+## Network Security
+
+### IP Restrictions
+
+Restrict dashboard access to specific IP addresses or ranges:
+
+1. Navigate to the Security page
+2. In the IP Restrictions section, click **Add IP Restriction**
+3. Enter IP addresses or CIDR notation ranges
+4. Specify whether the restriction applies to dashboard access, API access, or both
+5. Click **Save**
+
+### Traffic Filtering
+
+Configure traffic filtering for your Qanapi instance:
+
+1. Navigate to the Security page
+2. In the Traffic Filtering section, configure:
+   - Allowed countries
+   - Blocked IP ranges
+   - Connection throttling settings
+3. Click **Save Changes**
+
+## Logging & Monitoring
+
+### Security Event Log
+
+The Security Event Log records all security-relevant activities in your organization:
+
+1. Navigate to the Security page
+2. Click on the **Security Event Log** tab
+3. View events filtered by:
+   - Event type (login attempts, setting changes, etc.)
+   - Date range
+   - User
+   - IP address
+   - Success/failure status
+
+### Configuring Log Destinations
+
+Qanapi allows you to send logs to external systems for monitoring and analysis:
+
+1. Navigate to the Security page
+2. Click on the **Log Destinations** tab
+3. Click **Add Log Destination**
+4. Choose a destination type:
+   - SIEM (Splunk, LogRhythm, QRadar)
+   - Log Management (Datadog, New Relic, Sumo Logic)
+   - HTTPS Webhook
+   - AWS CloudWatch
+   - Azure Monitor
+   - Google Cloud Logging
+5. Configure the connection details for your chosen destination
+6. Select which event types to forward
+7. Click **Test Connection** to validate the setup
+8. Click **Save**
+
+<Note>
+Different log destination types may require specific credentials or API keys. Ensure you have these ready before configuration.
+</Note>
+
+### Audit Log Retention
+
+Configure how long your audit logs are retained:
+
+1. Navigate to the Security page
+2. In the Audit Log Settings section, select your retention period:
+   - 30 days (default)
+   - 90 days
+   - 180 days
+   - 365 days
+   - Custom retention period (Enterprise plans only)
+3. Click **Save Changes**
+
+<Warning>
+Longer retention periods may affect your storage usage and billing depending on your plan.
+</Warning>
+
+## Compliance Reporting
+
+### Generating Compliance Reports
+
+Qanapi provides built-in compliance reporting to assist with regulatory requirements:
+
+1. Navigate to the Security page
+2. Click on the **Compliance Reports** tab
+3. Select the report type:
+   - Access Activity Report
+   - Security Configuration Report
+   - Data Classification Usage Report
+   - API Key Usage Report
+4. Specify the date range
+5. Click **Generate Report**
+6. Download the report in PDF or CSV format
+
+### Scheduled Reports
+
+Set up automatic report generation and delivery:
+
+1. Navigate to the Compliance Reports tab
+2. Click **Schedule Reports**
+3. Configure:
+   - Report type
+   - Frequency (daily, weekly, monthly)
+   - Recipients
+   - Delivery method (email, webhook, storage)
+4. Click **Save Schedule**
+
+## Security Alerts
+
+### Configuring Security Alerts
+
+Set up notifications for suspicious or important security events:
+
+1. Navigate to the Security page
+2. Click on the **Alerts** tab
+3. Click **Add Alert**
+4. Select the event types to trigger alerts:
+   - Failed login attempts
+   - API key creation or deletion
+   - Permission changes
+   - Configuration changes
+   - Unusual access patterns
+5. Configure notification methods:
+   - Email
+   - SMS
+   - Webhook
+   - Slack
+6. Specify recipients
+7. Click **Save Alert**
+
+## Security Best Practices
+
+For optimal security with Qanapi:
+
+1. **Enable 2FA** for all team members
+2. **Implement SSO** if available in your plan
+3. **Use IP restrictions** to limit access to trusted networks
+4. **Rotate API keys** regularly
+5. **Monitor security logs** for unusual activity
+6. **Configure external log destinations** for permanent audit records
+7. **Set up alerting** for critical security events
+8. **Review user access** and permissions regularly
+9. **Utilize data classifications** to enforce access controls
+10. **Keep your browser and systems updated** to prevent vulnerabilities
+
+## Next Steps
+
+After configuring your security and logging settings:
+
+1. [Configure Application Settings](/administration/settings)
+2. [Review Billing Information](/administration/billing)
+3. [Manage Your Team](/administration/team-management)

@@ -1,0 +1,109 @@
+---
+title: 'Data Classifications'
+description: 'Creating and managing data classification tags for sensitive information'
+---
+
+# Data Classifications
+
+Data classification is a crucial feature of Qanapi that allows you to categorize your sensitive data based on its type and security requirements. By applying classification tags to your encrypted data, you can implement fine-grained access control and meet regulatory compliance requirements.
+
+## Understanding Data Classifications
+
+Classifications in Qanapi:
+
+- Associate metadata with your encrypted data
+- Enable access control based on classification levels
+- Support compliance with regulations like GDPR, HIPAA, FedRAMP, etc.
+- Provide visual indicators in third-party applications (through background and text colors)
+
+## Creating Classification Tags
+
+To create a new classification tag:
+
+1. Navigate to your project
+2. Select the **Classifications** tab
+3. Click the **Create Classification** button
+4. Fill in the details in the form:
+   - **Name**: Enter a name for the classification tag (e.g., "Health", "Commercial", "CUI")
+   - **Description**: Provide a description that will be used within system-generated compliance documentation
+   - **Background Color**: Select a color for the tag background (used in third-party applications)
+   - **Text Color**: Select a color for the tag text (used for text highlighting in third-party applications)
+5. Click **Create** to finalize the classification tag
+
+![Classification Creation](/images/classification-creation.png)
+
+## Managing Classification Tags
+
+The Classifications tab displays a list of all classification tags created for your project, including:
+
+- **Name**: The name of the classification
+- **Description**: The description you provided
+- **Visual Indicator**: A preview of how the classification tag appears with the selected colors
+- **Created**: When the classification was created
+
+### Editing Classifications
+
+To edit an existing classification:
+
+1. Find the classification you want to edit in the list
+2. Click the **Edit** button (pencil icon) next to it
+3. Update the desired fields
+4. Click **Save** to apply your changes
+
+### Deleting Classifications
+
+If you need to remove a classification:
+
+1. Locate the classification you want to delete
+2. Click the **Delete** button (trash icon) next to it
+3. Confirm the deletion when prompted
+
+<Warning>
+Deleting a classification that is in use will not remove it from already-encrypted data. However, you may lose the ability to filter or manage that data based on the deleted classification.
+</Warning>
+
+## Using Classifications with the Data Proxy
+
+When encrypting data through the Qanapi Smart Data Proxy, you can apply a classification by including the `X-Qanapi-Classification` header:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: title,body' \
+--header 'X-Qanapi-Classification: cui' \
+--header 'Content-Type: application/json' \
+--data '{"title": "Sensitive title", "body": "Sensitive body text"}'
+```
+
+In this example, the data is classified as "cui" (Controlled Unclassified Information).
+
+## Classification Best Practices
+
+For effective use of data classifications:
+
+1. **Create a classification schema** that aligns with your organization's data governance policies
+2. **Use consistent naming conventions** for classifications
+3. **Apply appropriate colors** that help users quickly identify data sensitivity levels
+4. **Document classifications** with clear descriptions
+5. **Limit the number of classifications** to prevent confusion (3-5 is typically sufficient)
+6. **Map classifications** to regulatory requirements where applicable
+
+## Recommended Classification Types
+
+Depending on your industry and requirements, consider creating classifications for:
+
+- **PII** (Personally Identifiable Information)
+- **PHI** (Protected Health Information)
+- **Financial** (Payment card data, account numbers)
+- **CUI** (Controlled Unclassified Information)
+- **Confidential** (Internal business information)
+- **Public** (Non-sensitive information)
+
+## Next Steps
+
+After setting up your data classifications, you should:
+
+1. [Configure Data Proxies](/api/data-proxies/overview)
+2. [Encrypt Data with Classifications](/api/data-proxies/encryption)
+3. [Set Up Team Access](/administration/team-management)
