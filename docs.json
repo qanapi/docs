@@ -89,22 +89,6 @@
             "pages": [
               "administration/billing"
             ]
-          },
-          {
-            "group": "Security & Logging",
-            "pages": [
-              "administration/security-log",
-              "administration/log-destinations",
-              "administration/event-log"
-            ]
-          },
-          {
-            "group": "Settings",
-            "pages": [
-              "administration/application-settings",
-              "administration/templates",
-              "administration/my-account"
-            ]
           }
         ]
       }
