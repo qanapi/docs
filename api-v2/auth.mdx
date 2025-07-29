@@ -1,0 +1,72 @@
+---
+title: Authentication & Token Lifecycle
+---
+
+## 🔐 Login, Logoff and be aware of your token
+
+### Login
+
+```ts
+const token = await client.auth.login(email, password);
+```
+Sample response:
+```json
+{
+  "access_token": "YOUR_JWT_TOKEN",
+  "token_type": "bearer",
+  "expires_in": 3600 //1 hour default
+}
+```
+
+### Refresh Token
+
+```ts
+await client.auth.refreshToken({
+  headers: { Authorization: `Bearer ${token}` },
+});
+```
+Sample response:
+```json
+{
+  "access_token": "YOUR_JWT_TOKEN",
+  "token_type": "bearer",
+  "expires_in": 3600 //1 hour default
+}
+```
+
+### Get User Details
+
+```ts
+await client.auth.retrieveUserDetails({
+  headers: { Authorization: `Bearer ${token}` },
+});
+```
+
+Sample response:
+```json
+{
+  "id": 2,
+  "email": "user@qanapi.com",
+  "name": "User",
+  "first_login": 1,
+  "email_verified_at": true,
+  "gravatar_url": "https://www.gravatar.com...",
+  "roles": [ "admin" ]
+}
+```
+
+### User Logout
+
+```ts
+await client.auth.retrieveUserDetails({
+  headers: { Authorization: `Bearer ${token}` },
+});
+```
+
+Sample response:
+```json
+{ 
+  "user": "user@qanapi.com", 
+  "message": "Successfully logged out"
+}
+```

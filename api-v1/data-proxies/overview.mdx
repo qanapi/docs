@@ -1,0 +1,104 @@
+---
+title: 'Smart Data Proxies Overview'
+description: 'Understanding Qanapi Smart Data Proxies for secure data encryption and transmission'
+---
+
+# Smart Data Proxies
+
+The Qanapi Smart Data Proxy provides a powerful HTTP endpoint that allows you to seamlessly encrypt, classify, and protect data within any HTTP request, ensuring that sensitive data is never exposed to the destination.
+
+## What is a Smart Data Proxy?
+
+A Smart Data Proxy acts as an intermediary between your application and external services, automatically encrypting sensitive data before it leaves your control. This approach:
+
+- **Protects sensitive fields** while allowing non-sensitive data to pass through normally
+- **Preserves data structure** in JSON payloads
+- **Maintains HTTP methods and headers** from the original request
+- **Hides sensitive data** from destination services
+- **Simplifies integration** with existing applications and services
+
+## Accessing Your Data Proxy
+
+Each project in Qanapi has its own dedicated Smart Data Proxy endpoint. To find your proxy endpoint:
+
+1. Navigate to your project in the Qanapi dashboard
+2. Click on the **Data Proxies** tab
+3. The page will display your proxy details, including:
+   - The environment (e.g., Development)
+   - The specific URL for your data proxy (e.g., `https://your-tenant.qanapi.cloud/proxy/your-project-id`)
+
+![Data Proxy Page](/images/data-proxy-page.png)
+
+## Key Features
+
+The Smart Data Proxy offers several powerful features:
+
+### Selective Field Encryption
+
+Choose which fields in your JSON payload require encryption, allowing you to protect only the sensitive data while leaving non-sensitive data in the clear.
+
+### Data Classification
+
+Associate classification tags with your encrypted data to enable fine-grained access control and regulatory compliance.
+
+### Request Forwarding
+
+Optionally forward the modified request (with encrypted data) to another service, allowing for seamless integration with existing workflows.
+
+### Transparent Decryption
+
+Easily decrypt data that was previously encrypted by Qanapi, with proper authentication and authorization.
+
+## How It Works
+
+The Smart Data Proxy follows this general workflow:
+
+1. **Your application** sends a request to the Qanapi Smart Data Proxy
+2. **The proxy** authenticates your request using your API key
+3. **Qanapi** encrypts the specified fields in your payload
+4. **The proxy** either:
+   - Returns the modified payload with encrypted data to your application, or
+   - Forwards the modified request to a destination service you specify
+
+## Required Headers
+
+When using the Smart Data Proxy, you must include these headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-Qanapi-Authorization` | Your API authorization token |
+| `X-Qanapi-Mode` | Specify `encrypt` for encryption and `decrypt` for decryption |
+| `X-Qanapi-Fields` | Comma-separated list of fields in the JSON payload to be encrypted or decrypted |
+| `Content-Type` | Set to `application/json` for JSON payloads |
+
+## Optional Headers
+
+You can also include these optional headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-Qanapi-Destination` | A URL to forward the request to after encryption instead of returning the encrypted data to the client |
+| `X-Qanapi-Classification` | The classification level of the data (e.g., `cui`, `health`, `financial`) |
+
+## Use Cases
+
+Smart Data Proxies are ideal for:
+
+- **API Integrations**: Secure data before sending it to third-party APIs
+- **Database Operations**: Encrypt sensitive fields before storage
+- **Regulatory Compliance**: Ensure sensitive data is properly protected for compliance with GDPR, HIPAA, etc.
+- **Zero Trust Architecture**: Support zero trust security models by encrypting data at all times
+
+## Next Steps
+
+Learn how to use the Smart Data Proxy for:
+
+1. [Encrypting Data](/api-v1/data-proxies/encryption)
+2. [Decrypting Data](/api-v1/data-proxies/decryption)
+3. [Forwarding Encrypted Data](/api-v1/data-proxies/forwarding)
+
+Or explore our language-specific examples:
+
+- [cURL Examples](/api-v1/examples/curl)
+- [Python Examples](/api-v1/examples/python)
+- [JavaScript Examples](/api-v1/examples/javascript)

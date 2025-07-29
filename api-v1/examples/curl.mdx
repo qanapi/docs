@@ -1,0 +1,222 @@
+---
+title: 'cURL Examples'
+description: 'Using Qanapi Smart Data Proxies with cURL commands'
+---
+
+# cURL Examples
+
+This page provides practical examples of how to use the Qanapi Smart Data Proxy with cURL commands for various common scenarios.
+
+## Basic Data Encryption
+
+Encrypt specific fields in a JSON payload:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: ssn,dob' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "John Smith",
+    "email": "john@example.com",
+    "ssn": "123-45-6789",
+    "dob": "1980-01-01",
+    "address": "123 Main St"
+}'
+```
+
+Response:
+
+```json
+{
+    "name": "John Smith",
+    "email": "john@example.com",
+    "ssn": "qanapi:bm9uZQ:MDFqNDRrZmJmenkyc3ZqbTg1NG5qYng2d2c:dHFkY1Q1MW81Y1hLcTRCdkxibG1DK3NoMnF0ZFE3OFVIa3REbFZwVGpmQT0:$",
+    "dob": "qanapi:bm9uZQ:MDFqNDRrZmJnOWN4ejYwcHFxOWo3c3huYXE:dzlTdlYwVkNVK0xmVXUwM2JLT2xGQi9rbHF4R1l0MWxCZlR5QlNqeHpZUT0:$",
+    "address": "123 Main St"
+}
+```
+
+## Encrypting with Classification
+
+Encrypt data with a classification tag:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: cardNumber,cvv' \
+--header 'X-Qanapi-Classification: financial' \
+--header 'Content-Type: application/json' \
+--data '{
+    "customerId": "cust_12345",
+    "cardNumber": "4111111111111111",
+    "cvv": "123",
+    "expiryDate": "12/25"
+}'
+```
+
+## Decrypting Data
+
+Decrypt previously encrypted fields:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: decrypt' \
+--header 'X-Qanapi-Fields: ssn,dob' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "John Smith",
+    "email": "john@example.com",
+    "ssn": "qanapi:bm9uZQ:MDFqNDRrZmJmenkyc3ZqbTg1NG5qYng2d2c:dHFkY1Q1MW81Y1hLcTRCdkxibG1DK3NoMnF0ZFE3OFVIa3REbFZwVGpmQT0:$",
+    "dob": "qanapi:bm9uZQ:MDFqNDRrZmJnOWN4ejYwcHFxOWo3c3huYXE:dzlTdlYwVkNVK0xmVXUwM2JLT2xGQi9rbHF4R1l0MWxCZlR5QlNqeHpZUT0:$",
+    "address": "123 Main St"
+}'
+```
+
+## Encrypting and Forwarding
+
+Encrypt data and forward it to another service:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: title,body' \
+--header 'X-Qanapi-Destination: https://jsonplaceholder.typicode.com/posts' \
+--header 'Content-Type: application/json' \
+--data '{
+    "title": "Sensitive title",
+    "body": "Sensitive body content",
+    "userId": 1
+}'
+```
+
+## Encrypting Nested Fields
+
+Encrypt fields within nested objects using dot notation:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: user.ssn,payment.cardDetails.number' \
+--header 'Content-Type: application/json' \
+--data '{
+    "orderId": "ord_12345",
+    "user": {
+        "name": "Jane Doe",
+        "ssn": "987-65-4321",
+        "email": "jane@example.com"
+    },
+    "payment": {
+        "amount": 199.99,
+        "cardDetails": {
+            "number": "5555555555554444",
+            "expiry": "03/24",
+            "cvv": "321"
+        }
+    }
+}'
+```
+
+## Encrypting Array Items
+
+Encrypt all items in an array:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: phoneNumbers,emailAddresses' \
+--header 'Content-Type: application/json' \
+--data '{
+    "userId": "user_12345",
+    "phoneNumbers": ["+1-555-123-4567", "+1-555-987-6543"],
+    "emailAddresses": ["personal@example.com", "work@example.com"]
+}'
+```
+
+## Using HTTP Methods Other Than POST
+
+You can use any HTTP method with the Qanapi Smart Data Proxy. Here's a GET example:
+
+```bash
+curl --location --request GET 'https://your-tenant.qanapi.cloud/proxy/your-project-id?id=1' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: decrypt' \
+--header 'X-Qanapi-Fields: title,body' \
+--header 'X-Qanapi-Destination: https://jsonplaceholder.typicode.com/posts/1'
+```
+
+And a PUT example:
+
+```bash
+curl --location --request PUT 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: title,body' \
+--header 'X-Qanapi-Destination: https://jsonplaceholder.typicode.com/posts/1' \
+--header 'Content-Type: application/json' \
+--data '{
+    "id": 1,
+    "title": "Updated sensitive title",
+    "body": "Updated sensitive content",
+    "userId": 1
+}'
+```
+
+## Error Handling Examples
+
+Invalid API key:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: invalid_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: ssn' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "John Smith",
+    "ssn": "123-45-6789"
+}'
+```
+
+Response:
+```json
+{
+    "error": "Unauthorized",
+    "message": "Invalid API key"
+}
+```
+
+Missing required fields:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "John Smith",
+    "ssn": "123-45-6789"
+}'
+```
+
+Response:
+```json
+{
+    "error": "Bad Request",
+    "message": "Missing required header: X-Qanapi-Fields"
+}
+```
+
+## Next Steps
+
+For more detailed examples and information:
+- See [Python Examples](/api-v1/examples/python)
+- See [JavaScript Examples](/api-v1/examples/javascript)
+- Learn about [Encrypting Data](/api-v1/data-proxies/encryption)
+- Learn about [Decrypting Data](/api-v1/data-proxies/decryption)

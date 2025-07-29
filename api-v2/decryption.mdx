@@ -1,0 +1,136 @@
+---
+title: Decryption API
+---
+
+## 🔓 Decrypt your data with simplicity and flexibility
+
+The decryption API matches encryption functionality:
+
+- Simple scalar decryptions
+- Full nested object structures
+- JSON/CSV file input based payloads
+- Partial field decryption via `sensitiveFields`
+- Strict ACL enforcement per metadata
+- External API-based decryption
+
+<div style={{
+  border: '1px solid #ffcc00',
+  backgroundColor: '#fff8e1',
+  padding: '1rem',
+  borderRadius: '6px',
+  fontSize: '1rem'
+}}>
+  <strong>Important:</strong>  
+  <p>Refer to the previous section to know more about *_sensitiveFields_* DSL</p>
+  <a href="/api-v2/encryption#%F0%9F%94%90-sensitive-fields-dsl-–-targeting-deep-structures"> go to Encrypt</a>
+</div>
+
+### Simple Decryption
+
+```ts
+await client.decrypt.decryptPayload({
+  data: 'qanapi:encrypted-string-here=='
+});
+```
+
+Sample response:
+```json
+"qanapi:MQ:MDFqeTc1Ym0weXFnN2t3dDlxeHl5cDB2cng:Wj06eLQuQHWsC+wisOgxPw:$"
+```
+
+### Nested Object Decryption (Full)
+
+```ts
+await client.decrypt.decryptPayload({
+  data: [
+    {
+        id: "1",
+        user: {
+            name: "qanapi:MQ:MDFqeTZ6eXd2c2Uya2IwcDlzMTFkd3gwYmo:gBXKoqr8xbl20V4NZFeW/Q:$",
+            email: "qanapi:MQ:MDFqeTZwMzJuOHZoOTBlcHA2ZTQ1NDNycTY:pYj6pxO+5KtL6Kk++C3w8A:$"
+        }
+    }
+  ],
+});
+```
+
+Sample response:
+```json
+[
+    {
+      "id": "1",
+      "user": {
+        "name": "User Qanapi",
+        "email": "user@qanapi.com"
+      },
+    }
+]
+```
+
+### Nested Object Decryption (Partial)
+
+```ts
+await client.decrypt.decryptPayload({
+  data: [
+    {
+        id: "1",
+        user: {
+            name: "qanapi:MQ:MDFqeTZ6eXd2c2Uya2IwcDlzMTFkd3gwYmo:gBXKoqr8xbl20V4NZFeW/Q:$",
+            email: "qanapi:MQ:MDFqeTZwMzJuOHZoOTBlcHA2ZTQ1NDNycTY:pYj6pxO+5KtL6Kk++C3w8A:$"
+        }
+    }
+  ],
+  sensitiveFields: ["user.email"]
+});
+```
+
+Sample response:
+```json
+[
+  {
+    "id": "1",
+    "user": {
+        "name": "qanapi:MQ:MDFqeTZ6eXd2c2Uya2IwcDlzMTFkd3gwYmo:gBXKoqr8xbl20V4NZFeW/Q:$",
+        "email": "user@qanapi.com"
+    },
+  }
+]
+```
+
+### File-Based Decryption
+
+```ts
+await client.decrypt.decryptPayload({
+  filePath: './data.json'
+});
+```
+
+Sample response is meant to be consistent with previous json body based payloads.
+
+### External API-Based Decryption
+
+```ts
+await client.decrypt.decryptPayload({
+  data: {
+    id: "ff8081819782e69e019783e167de03cd",
+    name: "Apple MacBook Pro 16",
+    createdAt: "2025-06-18T16:31:16.958+00:00",
+    data: {
+      year: "2019",
+      price: "1849.99",
+      CPU_model: "qanapi:MQ:MDFqeTBkMHd6ZThjNXM4OGhhY3E5ZDlobTA:1pmsTtDvzyhohDBy1b5wkg:$",
+      Hard_disk size: "1 TB"
+    }
+  },
+  destination: 'https://external-data-provider.com/encrypted-data'
+});
+```
+
+Sample response:
+```json
+{
+  "headers": {},
+  "original": "{\"id\":\"ff8081819782e69e019783e167de03cd\",\"name\":\"Apple MacBook Pro 16\",\"createdAt\":\"2025-06-18T16:31:16.958+00:00\",\"data\":{\"year\":\"2019\",\"price\":\"1849.99\",\"CPU model\":\"Intel Core i9\",\"Hard disk size\":\"1 TB\"}}",
+  "exception": null
+}
+```

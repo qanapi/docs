@@ -59,18 +59,30 @@
           {
             "group": "Smart Data Proxies",
             "pages": [
-              "api/data-proxies/overview",
-              "api/data-proxies/encryption",
-              "api/data-proxies/decryption",
-              "api/data-proxies/forwarding"
+              "api-v1/data-proxies/overview",
+              "api-v1/data-proxies/encryption",
+              "api-v1/data-proxies/decryption",
+              "api-v1/data-proxies/forwarding"
             ]
           },
           {
-            "group": "Usage Examples",
+            "group": "API v1 Usage Examples",
             "pages": [
-              "api/examples/curl",
-              "api/examples/python",
-              "api/examples/javascript"
+              "api-v1/examples/curl",
+              "api-v1/examples/python",
+              "api-v1/examples/javascript"
+            ]
+          },
+          {
+            "group": "API v2",
+            "pages": [
+              "/api-v2/quick-start",
+              "/api-v2/setup",
+              "/api-v2/auth",
+              "/api-v2/encryption",
+              "/api-v2/decryption",
+              "/api-v2/security",
+              "/api-v2/links"
             ]
           }
         ]

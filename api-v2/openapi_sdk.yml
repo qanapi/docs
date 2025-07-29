@@ -1,0 +1,525 @@
+openapi: 3.0.3
+
+info:
+  title: Qanapi
+  version: 1.0.0
+  description: Secure API with enforced JWT and API Key headers. All endpoints are scoped and require proper authentication.
+
+servers:
+  - url: https://{subdomain}.qanapi.cloud/api/v2
+    description: The Qanapi API server
+    variables: {
+      "subdomain": {
+        "default": "",
+        "description": "Customer-specific subdomain."
+      },
+    }
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-qanapi-authorization
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    EncryptRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          description: |
+            The actual data to encrypt.
+            - Can be a scalar (string/number), object, or array.
+            - If the value is an object or array, only the specified `sensitiveFields` are encrypted.
+          oneOf:
+            - type: string
+            - type: number
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: {}
+        sensitiveFields:
+          type: array
+          items:
+            type: string
+          description: |
+            Laravel-style dot-notated paths to fields that should be encrypted.
+            
+            Supports:
+              - Dot notation for nested fields: `user.profile.ssn`
+              - Wildcard `*` for arrays or dynamic keys: `users.*.token`
+            
+            Examples:
+              - `password`
+              - `user.credentials.secret`
+              - `accounts.*.secret`
+              - `teams.*.members.*.email`
+
+
+        attributes:
+          type: object
+          description: Optional metadata describing the data's context.
+          properties:
+            classification:
+              type: string
+              enum: [public, internal, confidential, restricted]
+              example: confidential
+            owner:
+              type: string
+              format: email
+              example: jane@example.com
+            tags:
+              type: array
+              items:
+                type: string
+              example: ["pii", "finance"]
+
+        access:
+          type: object
+          properties:
+            acl:
+              type: array
+              items:
+                type: string
+              description: |
+                Access control list — list of user roles authorized to decrypt this data.
+              example: ["admin", "auditor"]
+        destination:
+          type: string
+          format: uri
+          description: Optional URL to forward the encrypted result
+    
+    EncryptResponse:
+      type: object
+      description: The result of an encryption request.
+      additionalProperties: true
+
+    DecryptRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          description: |
+            The encrypted payload to decrypt.
+            - Can be a string or an object/array with encrypted fields.
+            - Decryption is selective if `sensitiveFields` is provided.
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: {}
+
+        sensitiveFields:
+          type: array
+          items:
+            type: string
+          description: |
+            Laravel-style dot-notated paths to fields to decrypt.
+            
+            - Same syntax and behavior as in EncryptRequest.
+            - If omitted, all string values matching encryption prefix are attempted.
+
+            Examples:
+              - `user.ssn`
+              - `employees.*.payroll.token`
+        destination:
+          type: string
+          format: uri
+          description: Optional URL to forward the decrypted result
+          
+    DecryptResponse:
+      type: object
+      description: The result of an encryption request.
+      additionalProperties: true
+      
+    DestinationResponse:
+      type: object
+      properties:
+        headers:
+          type: object
+          additionalProperties: true
+        original:
+          description: The original encrypted/decrypted content forwarded as service result
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties: true
+        exception:
+          type: string
+          nullable: true
+          
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "User not found"
+  
+paths:
+  /auth/login:
+    post:
+      summary: Authenticate user and return JWT
+      security:
+        - ApiKeyAuth: []
+      tags:
+        - Authentication and Token Lifecycle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: valid@email.com
+                password:
+                  type: string
+                  example: secret1234
+      responses:
+        '200':
+          description: JWT issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT Bearer token
+                  token_type:
+                    type: string
+                    description: Token Type
+                  expires_in:
+                    type: integer
+                    description: Token expiration in seconds
+        '401':
+          description: Unauthorized
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token using refresh token
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      tags:
+        - Authentication and Token Lifecycle
+      responses:
+        '200':
+          description: New token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT access token
+                  token_type:
+                    type: string
+                    example: bearer
+                  expires_in:
+                    type: integer
+                    description: Token expiration time in seconds
+        '401':
+          description: Invalid or expired token
+
+  /auth/revoke:
+    post:
+      summary: Revoke the current token
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      tags:
+        - Authentication and Token Lifecycle
+      responses:
+        '200':
+          description: Token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Token successfully revoked.
+        '401':
+          description: Invalid token
+
+  /auth/logout:
+    post:
+      summary: Log out the current user
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      tags:
+        - Authentication and Token Lifecycle
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: string
+                    format: email
+                    example: user@example.com
+                  message:
+                    type: string
+                    example: Successfully logged out
+        '401':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The token has been blacklisted
+
+
+  /auth/userdetails:
+    get:
+      summary: Retrieve user profile and roles
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      tags:
+        - Authentication and Token Lifecycle
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 123
+                  email:
+                    type: string
+                    format: email
+                    example: fake.user@example.com
+                  name:
+                    type: string
+                    example: Fake User
+                  first_login:
+                    type: integer
+                    example: 0
+                  email_verified_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                    example: null
+                  gravatar_url:
+                    type: string
+                    format: uri
+                    example: https://www.gravatar.com/avatar/00000000000000000000000000000000
+                  roles:
+                    type: array
+                    items:
+                      type: string
+                    example: ["admin", "user", "readonly", "audit"]
+        '401':
+          description: Unauthorized
+          
+  /encrypt:
+    post:
+      summary: Encrypt data with optional ACL and destination
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      tags:
+        - Encryption
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EncryptRequest'
+            example:
+              data:
+                password: secret
+              sensitiveFields:
+                - password
+              attributes:
+                classification: confidential
+                owner: alice@example.com
+                tags:
+                  - legal
+              access:
+                acl:
+                  - admin
+              destination: https://example.com
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: string
+                  format: binary
+                sensitiveFields:
+                  type: array
+                  items:
+                    type: string
+                attributes:
+                  type: object
+                  properties:
+                    classification:
+                      type: string
+                    owner:
+                      type: string
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                access:
+                  type: object
+                  properties:
+                    acl:
+                      type: array
+                      items:
+                        type: string
+                destination:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Encrypted data or redirection result
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/EncryptResponse'
+                  - $ref: '#/components/schemas/DestinationResponse'
+              example:
+                data:
+                  password: enc$::abc123::...
+        '400':
+          description: Invalid data send by the client
+          content:
+            multipart/form-data:
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidJson:
+                  summary: Invalid JSON file Syntax error
+                emptyFile:
+                  summary: Empty file.
+                maxFileExceeded:
+                  summary: JSON file exceeds the maximum allowed size of 10MB.
+                Unsupported file type:
+                  summary: Unsupported file type.
+        '403':
+          description: Forbidden
+ 
+  /decrypt:
+    post:
+      summary: Decrypt encrypted payload with optional ACL and destination
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      tags:
+        - Decryption
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecryptRequest'
+            examples:
+              decryptExample:
+                summary: Decrypt password field
+                value:
+                  data:
+                    password: enc$::abc123::...
+                  sensitiveFields:
+                    - password
+                  destination: https://example.com
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: string
+                  format: binary
+                sensitiveFields:
+                  type: array
+                  items:
+                    type: string
+                attributes:
+                  type: object
+                  properties:
+                    classification:
+                      type: string
+                    owner:
+                      type: string
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                access:
+                  type: object
+                  properties:
+                    acl:
+                      type: array
+                      items:
+                        type: string
+                destination:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Decrypted result or forwarded destination response
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/DecryptResponse'
+                  - $ref: '#/components/schemas/DestinationResponse'
+              example:
+                data:
+                  password: secret
+        '403':
+          description: Access denied
+        '400':
+          description: Invalid data send by the client
+          content:
+            application:json:
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                noMetadata:
+                  summary: Encryption metadata not found.
+            multipart/form-data:
+              schema: 
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidJson:
+                  summary: Invalid JSON file Syntax error
+                emptyFile:
+                  summary: Empty file.
+                maxFileExceeded:
+                  summary: JSON file exceeds the maximum allowed size of 10MB.
+                Unsupported file type:
+                  summary: Unsupported file type.
+        '422':
+          description: Decryption failed

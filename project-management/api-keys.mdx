@@ -56,7 +56,7 @@ API keys are used in various Qanapi API calls and with the Smart Data Proxy:
 When making direct API calls to Qanapi, include your API key in the request header:
 
 ```bash
-curl --location 'https://your-tenant.qanapi.cloud/api/v1/encrypt' \
+curl --location 'https://your-tenant.qanapi.cloud/api-v1/v1/encrypt' \
 --header 'X-Qanapi-Authorization: your_api_key' \
 --header 'Content-Type: application/json' \
 --data '{"data": "Your sensitive data"}'
@@ -100,5 +100,5 @@ Be aware of the following limitations:
 After creating your API keys, you should:
 
 1. [Set Up Data Classifications](/project-management/data-classifications)
-2. [Configure Data Proxies](/api/data-proxies/overview)
-3. [Encrypt and Decrypt Data](/api/data-proxies/encryption)
+2. [Configure Data Proxies](/api-v1/data-proxies/overview)
+3. [Encrypt and Decrypt Data](/api-v1/data-proxies/encryption)

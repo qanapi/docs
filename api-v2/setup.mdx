@@ -1,0 +1,17 @@
+---
+title: Setup
+---
+
+## ⚙️ Import and Instantiate the Qanapi SDK client
+
+```ts
+import Qanapi from 'qanapi';
+
+const client = new Qanapi({
+  apiKey: 'YOUR_API_KEY',
+  subdomain: 'courageous-hamster.qanapi-sandbox.cloud', // optional (necessary on sandbox environments)
+  baseURL: 'https://courageous-hamster.qanapi-sandbox.cloud/api/v2', // optional (necessary on sandbox environments)
+  logLevel: 'debug', // optional
+  maxRetries: 0, // optional (2 default)
+});
+```    

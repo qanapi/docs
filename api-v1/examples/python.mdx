@@ -1,0 +1,419 @@
+---
+title: 'Python Examples'
+description: 'Using Qanapi Smart Data Proxies with Python'
+---
+
+# Python Examples
+
+This page provides practical examples of how to use the Qanapi Smart Data Proxy with Python for various common scenarios.
+
+## Setup
+
+First, make sure you have the `requests` library installed:
+
+```bash
+pip install requests
+```
+
+## Basic Data Encryption
+
+Encrypt specific fields in a JSON payload:
+
+```python
+import requests
+import json
+
+# Your Qanapi configuration
+tenant_url = "https://your-tenant.qanapi.cloud"
+project_id = "your-project-id"
+api_key = "your-api-key"
+
+# Data to encrypt
+data = {
+    "name": "John Smith",
+    "email": "john@example.com",
+    "ssn": "123-45-6789",
+    "dob": "1980-01-01",
+    "address": "123 Main St"
+}
+
+# Headers for the request
+headers = {
+    "X-Qanapi-Authorization": api_key,
+    "X-Qanapi-Mode": "encrypt",
+    "X-Qanapi-Fields": "ssn,dob",
+    "Content-Type": "application/json"
+}
+
+# Make the request
+response = requests.post(
+    f"{tenant_url}/proxy/{project_id}",
+    headers=headers,
+    json=data
+)
+
+# Print the response
+encrypted_data = response.json()
+print(json.dumps(encrypted_data, indent=2))
+```
+
+## Encrypting with Classification
+
+Encrypt data with a classification tag:
+
+```python
+import requests
+import json
+
+# Your Qanapi configuration
+tenant_url = "https://your-tenant.qanapi.cloud"
+project_id = "your-project-id"
+api_key = "your-api-key"
+
+# Payment data to encrypt
+data = {
+    "customerId": "cust_12345",
+    "cardNumber": "4111111111111111",
+    "cvv": "123",
+    "expiryDate": "12/25"
+}
+
+# Headers for the request
+headers = {
+    "X-Qanapi-Authorization": api_key,
+    "X-Qanapi-Mode": "encrypt",
+    "X-Qanapi-Fields": "cardNumber,cvv",
+    "X-Qanapi-Classification": "financial",
+    "Content-Type": "application/json"
+}
+
+# Make the request
+response = requests.post(
+    f"{tenant_url}/proxy/{project_id}",
+    headers=headers,
+    json=data
+)
+
+# Print the response
+encrypted_data = response.json()
+print(json.dumps(encrypted_data, indent=2))
+```
+
+## Decrypting Data
+
+Decrypt previously encrypted fields:
+
+```python
+import requests
+import json
+
+# Your Qanapi configuration
+tenant_url = "https://your-tenant.qanapi.cloud"
+project_id = "your-project-id"
+api_key = "your-api-key"
+
+# Data with encrypted fields
+encrypted_data = {
+    "name": "John Smith",
+    "email": "john@example.com",
+    "ssn": "qanapi:bm9uZQ:MDFqNDRrZmJmenkyc3ZqbTg1NG5qYng2d2c:dHFkY1Q1MW81Y1hLcTRCdkxibG1DK3NoMnF0ZFE3OFVIa3REbFZwVGpmQT0:$",
+    "dob": "qanapi:bm9uZQ:MDFqNDRrZmJnOWN4ejYwcHFxOWo3c3huYXE:dzlTdlYwVkNVK0xmVXUwM2JLT2xGQi9rbHF4R1l0MWxCZlR5QlNqeHpZUT0:$",
+    "address": "123 Main St"
+}
+
+# Headers for the request
+headers = {
+    "X-Qanapi-Authorization": api_key,
+    "X-Qanapi-Mode": "decrypt",
+    "X-Qanapi-Fields": "ssn,dob",
+    "Content-Type": "application/json"
+}
+
+# Make the request
+response = requests.post(
+    f"{tenant_url}/proxy/{project_id}",
+    headers=headers,
+    json=encrypted_data
+)
+
+# Print the response
+decrypted_data = response.json()
+print(json.dumps(decrypted_data, indent=2))
+```
+
+## Encrypting and Forwarding
+
+Encrypt data and forward it to another service:
+
+```python
+import requests
+import json
+
+# Your Qanapi configuration
+tenant_url = "https://your-tenant.qanapi.cloud"
+project_id = "your-project-id"
+api_key = "your-api-key"
+
+# Data to encrypt and forward
+data = {
+    "title": "Sensitive title",
+    "body": "Sensitive body content",
+    "userId": 1
+}
+
+# Destination service
+destination_url = "https://jsonplaceholder.typicode.com/posts"
+
+# Headers for the request
+headers = {
+    "X-Qanapi-Authorization": api_key,
+    "X-Qanapi-Mode": "encrypt",
+    "X-Qanapi-Fields": "title,body",
+    "X-Qanapi-Destination": destination_url,
+    "Content-Type": "application/json"
+}
+
+# Make the request
+response = requests.post(
+    f"{tenant_url}/proxy/{project_id}",
+    headers=headers,
+    json=data
+)
+
+# Print the response from the destination service
+forwarded_response = response.json()
+print(json.dumps(forwarded_response, indent=2))
+```
+
+## Encrypting Nested Fields
+
+Encrypt fields within nested objects using dot notation:
+
+```python
+import requests
+import json
+
+# Your Qanapi configuration
+tenant_url = "https://your-tenant.qanapi.cloud"
+project_id = "your-project-id"
+api_key = "your-api-key"
+
+# Data with nested fields to encrypt
+data = {
+    "orderId": "ord_12345",
+    "user": {
+        "name": "Jane Doe",
+        "ssn": "987-65-4321",
+        "email": "jane@example.com"
+    },
+    "payment": {
+        "amount": 199.99,
+        "cardDetails": {
+            "number": "5555555555554444",
+            "expiry": "03/24",
+            "cvv": "321"
+        }
+    }
+}
+
+# Headers for the request
+headers = {
+    "X-Qanapi-Authorization": api_key,
+    "X-Qanapi-Mode": "encrypt",
+    "X-Qanapi-Fields": "user.ssn,payment.cardDetails.number",
+    "Content-Type": "application/json"
+}
+
+# Make the request
+response = requests.post(
+    f"{tenant_url}/proxy/{project_id}",
+    headers=headers,
+    json=data
+)
+
+# Print the response
+encrypted_data = response.json()
+print(json.dumps(encrypted_data, indent=2))
+```
+
+## Creating a Reusable Qanapi Client
+
+For convenience, you can create a reusable client class:
+
+```python
+import requests
+import json
+
+class QanapiClient:
+    def __init__(self, tenant_url, project_id, api_key):
+        self.tenant_url = tenant_url
+        self.project_id = project_id
+        self.api_key = api_key
+        self.proxy_url = f"{tenant_url}/proxy/{project_id}"
+    
+    def encrypt(self, data, fields, classification=None, destination=None):
+        """
+        Encrypt specified fields in the data.
+        
+        Args:
+            data (dict): The data to encrypt
+            fields (str): Comma-separated list of fields to encrypt
+            classification (str, optional): Classification tag
+            destination (str, optional): URL to forward the encrypted data
+            
+        Returns:
+            dict: The response from Qanapi
+        """
+        headers = {
+            "X-Qanapi-Authorization": self.api_key,
+            "X-Qanapi-Mode": "encrypt",
+            "X-Qanapi-Fields": fields,
+            "Content-Type": "application/json"
+        }
+        
+        if classification:
+            headers["X-Qanapi-Classification"] = classification
+            
+        if destination:
+            headers["X-Qanapi-Destination"] = destination
+        
+        response = requests.post(
+            self.proxy_url,
+            headers=headers,
+            json=data
+        )
+        
+        return response.json()
+    
+    def decrypt(self, data, fields, destination=None):
+        """
+        Decrypt specified fields in the data.
+        
+        Args:
+            data (dict): The data containing encrypted fields
+            fields (str): Comma-separated list of fields to decrypt
+            destination (str, optional): URL to forward the decrypted data
+            
+        Returns:
+            dict: The response from Qanapi
+        """
+        headers = {
+            "X-Qanapi-Authorization": self.api_key,
+            "X-Qanapi-Mode": "decrypt",
+            "X-Qanapi-Fields": fields,
+            "Content-Type": "application/json"
+        }
+            
+        if destination:
+            headers["X-Qanapi-Destination"] = destination
+        
+        response = requests.post(
+            self.proxy_url,
+            headers=headers,
+            json=data
+        )
+        
+        return response.json()
+
+# Usage example
+if __name__ == "__main__":
+    # Initialize the client
+    client = QanapiClient(
+        tenant_url="https://your-tenant.qanapi.cloud",
+        project_id="your-project-id",
+        api_key="your-api-key"
+    )
+    
+    # Data to encrypt
+    user_data = {
+        "name": "John Smith",
+        "ssn": "123-45-6789",
+        "email": "john@example.com"
+    }
+    
+    # Encrypt data
+    encrypted_data = client.encrypt(
+        data=user_data,
+        fields="ssn",
+        classification="pii"
+    )
+    print("Encrypted data:")
+    print(json.dumps(encrypted_data, indent=2))
+    
+    # Decrypt data
+    decrypted_data = client.decrypt(
+        data=encrypted_data,
+        fields="ssn"
+    )
+    print("\nDecrypted data:")
+    print(json.dumps(decrypted_data, indent=2))
+```
+
+## Error Handling
+
+Proper error handling is important when working with the Qanapi API:
+
+```python
+import requests
+import json
+
+# Your Qanapi configuration
+tenant_url = "https://your-tenant.qanapi.cloud"
+project_id = "your-project-id"
+api_key = "your-api-key"
+
+# Data to encrypt
+data = {
+    "name": "John Smith",
+    "ssn": "123-45-6789"
+}
+
+# Headers for the request
+headers = {
+    "X-Qanapi-Authorization": api_key,
+    "X-Qanapi-Mode": "encrypt",
+    "X-Qanapi-Fields": "ssn",
+    "Content-Type": "application/json"
+}
+
+try:
+    # Make the request
+    response = requests.post(
+        f"{tenant_url}/proxy/{project_id}",
+        headers=headers,
+        json=data
+    )
+    
+    # Check if the request was successful
+    response.raise_for_status()
+    
+    # Process the response
+    encrypted_data = response.json()
+    print(json.dumps(encrypted_data, indent=2))
+    
+except requests.exceptions.HTTPError as e:
+    # Handle HTTP errors (4xx, 5xx)
+    print(f"HTTP Error: {e}")
+    try:
+        error_data = response.json()
+        print(f"Error details: {json.dumps(error_data, indent=2)}")
+    except:
+        print(f"Error response: {response.text}")
+        
+except requests.exceptions.ConnectionError:
+    print("Connection Error: Failed to connect to Qanapi")
+    
+except requests.exceptions.Timeout:
+    print("Timeout Error: The request timed out")
+    
+except requests.exceptions.RequestException as e:
+    print(f"Error: {e}")
+```
+
+## Next Steps
+
+For more detailed examples and information:
+- See [cURL Examples](/api-v1/examples/curl)
+- See [JavaScript Examples](/api-v1/examples/javascript)
+- Learn about [Encrypting Data](/api-v1/data-proxies/encryption)
+- Learn about [Decrypting Data](/api-v1/data-proxies/decryption)

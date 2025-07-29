@@ -1,0 +1,152 @@
+---
+title: 'Encrypting Data'
+description: 'How to encrypt data using Qanapi Smart Data Proxies'
+---
+
+# Encrypting Data with Smart Data Proxies
+
+This guide demonstrates how to use the Qanapi Smart Data Proxy to encrypt sensitive data within JSON payloads.
+
+## Encryption Process Overview
+
+When you encrypt data with the Smart Data Proxy:
+
+1. Your application sends a JSON payload to your project's proxy endpoint
+2. You specify which fields to encrypt using the `X-Qanapi-Fields` header
+3. Qanapi encrypts only those specified fields, leaving the rest untouched
+4. The encrypted data is returned in the same structure, with encrypted values replacing the original sensitive data
+
+## Basic Encryption Request
+
+Here's a basic example of how to encrypt data using the Smart Data Proxy:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: title,body' \
+--header 'Content-Type: application/json' \
+--data '{
+    "userId": 1,
+    "id": 1,
+    "title": "Title text to encrypt",
+    "body": "Body text to encrypt"
+}'
+```
+
+## Understanding the Headers
+
+For encryption requests, you need to include these headers:
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `X-Qanapi-Authorization` | `your_api_key` | Your API key for authentication |
+| `X-Qanapi-Mode` | `encrypt` | Specifies that you want to encrypt data |
+| `X-Qanapi-Fields` | `title,body` | Comma-separated list of field names to encrypt |
+| `Content-Type` | `application/json` | Specifies that the payload is JSON |
+
+## Optional Headers for Encryption
+
+You can also include these optional headers:
+
+| Header | Example Value | Description |
+|--------|---------------|-------------|
+| `X-Qanapi-Classification` | `cui` | Assigns a classification tag to the encrypted data |
+| `X-Qanapi-Destination` | `https://example.com/api` | Forwards the encrypted data to this URL |
+
+## Sample Response
+
+When encrypting data, the response will contain the original JSON structure with the specified fields replaced by encrypted values:
+
+```json
+{
+  "userId": 1,
+  "id": 1,
+  "title": "qanapi:bm9uZQ:MDFqNDRrZmJmenkyc3ZqbTg1NG5qYng2d2c:dHFkY1Q1MW81Y1hLcTRCdkxibG1DK3NoMnF0ZFE3OFVIa3REbFZwVGpmQT0:$",
+  "body": "qanapi:bm9uZQ:MDFqNDRrZmJnOWN4ejYwcHFxOWo3c3huYXE:dzlTdlYwVkNVK0xmVXUwM2JLT2xGQi9rbHF4R1l0MWxCZlR5QlNqeHpZUT0:$"
+}
+```
+
+## Encrypting Nested JSON Objects
+
+You can encrypt fields within nested JSON objects by using dot notation in the `X-Qanapi-Fields` header:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: user.name,user.email,payment.cardNumber' \
+--header 'Content-Type: application/json' \
+--data '{
+    "orderId": "12345",
+    "user": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "customer"
+    },
+    "payment": {
+        "cardNumber": "4111111111111111",
+        "expiryDate": "12/25"
+    }
+}'
+```
+
+## Encrypting Arrays
+
+To encrypt items in an array, specify the field name in the `X-Qanapi-Fields` header. All items in the array will be encrypted:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: tags,comments' \
+--header 'Content-Type: application/json' \
+--data '{
+    "postId": 123,
+    "tags": ["sensitive", "personal", "private"],
+    "comments": ["Great post!", "Contains personal info"]
+}'
+```
+
+## Using Data Classifications
+
+Adding a classification to your encrypted data helps with access control and compliance:
+
+```bash
+curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
+--header 'X-Qanapi-Authorization: your_api_key' \
+--header 'X-Qanapi-Mode: encrypt' \
+--header 'X-Qanapi-Fields: ssn,dob' \
+--header 'X-Qanapi-Classification: pii' \
+--header 'Content-Type: application/json' \
+--data '{
+    "name": "Jane Smith",
+    "ssn": "123-45-6789",
+    "dob": "1980-01-01"
+}'
+```
+
+## Error Handling
+
+Common errors when encrypting data include:
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| 401 | Unauthorized | Check your API key |
+| 400 | Bad Request | Ensure your JSON is valid and fields are correctly specified |
+| 422 | Unprocessable Entity | Check that the fields you specified exist in your payload |
+| 429 | Too Many Requests | You've exceeded the rate limit, wait and try again |
+
+## Best Practices for Encryption
+
+1. **Only encrypt sensitive fields** - Don't encrypt everything, focus on sensitive data
+2. **Use meaningful classifications** - Apply appropriate classification tags for better access control
+3. **Store encrypted data securely** - Even though the data is encrypted, follow good security practices
+4. **Document encrypted fields** - Keep track of which fields are encrypted in your application
+5. **Handle errors gracefully** - Implement proper error handling in your application
+
+## Next Steps
+
+- [Learn how to decrypt data](/api-v1/data-proxies/decryption)
+- [Set up forwarding of encrypted data](/api-v1/data-proxies/forwarding)
+- [Explore language-specific examples](/api-v1/examples/curl)

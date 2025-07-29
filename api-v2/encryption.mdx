@@ -1,0 +1,213 @@
+---
+title: Encryption API
+---
+
+## 🔒 Encrypt your data with simplicity and flexibility
+
+The encryption API supports multiple payload types:
+
+- Simple scalar strings
+- Full nested object structures
+- JSON/CSV file input based payloads
+- External API destinations
+- Partial field encryption via `sensitiveFields`
+- Metadata & ACL support
+
+### Common Encryption Payload
+
+```ts
+await client.encrypt.encryptData({
+  data: [
+    {
+      id: "1",
+      user: {
+          name: "User Qanapi",
+          email: "123456"
+      }
+    }
+  ],
+  access: { acl: ["admin"] },
+  attributes: {
+    classification: "confidential",
+    owner: "user@qanapi.com",
+    tags: ["legal"],
+  },
+}, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+Sample Response:
+```json
+[
+  {
+    "id": "qanapi:MQ:MDFqeTZ6eXd2YmRxYXhnd21wbjZmbjJidnM:sal1UixF82PTo+W4TdIkgQ:$",
+    "user": {
+      "name": "qanapi:MQ:MDFqeTZ6eXd2c2Uya2IwcDlzMTFkd3gwYmo:gBXKoqr8xbl20V4NZFeW/Q:$",
+      "email": "qanapi:MQ:MDFqeTZ6eXd3YnkwY3N4NTdobWI1MWo2Yzg:unSb5acL5eFS6uTTbO2sFg:$"
+    }
+  }
+]
+```
+
+### File-Based Input Payloads
+
+```ts
+await client.encrypt.encryptData({
+  data: './data.json',
+  attributes: { classification: 'internal' },
+  access: { acl: ['admin'] }
+});
+```
+Sample response is meant to be consistent with previous Json payload example.
+
+### Selective Encryption Payload
+
+```ts
+await client.encrypt.encryptData({
+  data: [
+    {
+      id: "1",
+      user: {
+          "name": "User Qanapi",
+          "email": "123456"
+      },
+    }
+  ],
+  sensitiveFields: ["user.email"],
+  access: { acl: ["admin"] },
+  attributes: {
+    classification: "confidential",
+    owner: "user@qanapi.com",
+    tags: ["legal"],
+  },
+}, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+Sample response:
+```json
+[
+  {
+      "id": "1",
+      "user": {
+          "name": "User Qanapi",
+          "email": "qanapi:MQ:MDFqeTZwMzJuOHZoOTBlcHA2ZTQ1NDNycTY:pYj6pxO+5KtL6Kk++C3w8A:$"
+      }
+  }
+]
+```
+
+### External API-Based Encryption
+
+```ts
+await client.encrypt.encrypt({
+  data: {
+    name: "Apple MacBook Pro 16",
+    data: {
+      year: "2019",
+      price: "1849.99",
+      CPU model: "Intel Core i9",
+      Hard disk size: "1 TB"
+    },
+    sensitiveFields: ["data.CPU model"],
+  },
+  destination: "https://api.restful-api.dev/objects",
+});
+```
+
+Sample response:
+```json
+{
+  "headers": {},
+  "original": "{\"id\":\"ff8081819782e69e019783e167de03cd\",\"name\":\"Apple MacBook Pro 16\",\"createdAt\":\"2025-06-18T16:31:16.958+00:00\",\"data\":{\"year\":\"2019\",\"price\":\"1849.99\",\"CPU model\":\"qanapi:MQ:MDFqeTBkMHd6ZThjNXM4OGhhY3E5ZDlobTA:1pmsTtDvzyhohDBy1b5wkg:$\",\"Hard disk size\":\"1 TB\"}}",
+  "exception": null
+}
+```
+
+> Supports `destination` URLs with embedded basic auth  
+> (e.g. `https://username:password@host/path`)
+
+# 🔐 Sensitive Fields DSL – Targeting Deep Structures
+
+The `sensitiveFields` array is a **dot-notated DSL (Domain-Specific Language)** that specifies which fields in a JSON payload should be **encrypted** or **decrypted**.
+
+---
+
+## 🧭 Syntax Overview
+
+| Pattern | Description                       |
+|---------|-----------------------------------|
+| `.`     | Navigate through nested objects   |
+| `*`     | Wildcard that matches any key or array index at that level |
+
+---
+
+## 🎯 Examples of Patterns
+
+| Feature         | Example                      | Meaning                                                             |
+|-----------------|------------------------------|---------------------------------------------------------------------|
+| Dot notation    | `user.email`                 | Targets the `email` inside the `user` object                        |
+| Wildcards `*`   | `users.*.ssn`                | Targets `ssn` inside every object in the `users` array              |
+| Nested arrays   | `users.*.address.zip`        | Targets `zip` inside `address` of each user                         |
+| Mixed wildcards | `*.credentials.*.secret`     | Targets `secret` at any nested level inside `credentials` objects  |
+
+---
+
+## 🧪 Usage Examples
+
+### 🔸 Flat Payload
+
+```ts
+{
+  email: "user@example.com",
+  password: "hunter2"
+},
+sensitiveFields: ["password"]
+```
+Only password field will be encrypted.
+
+
+### 🔸 Nested Object
+```ts
+{
+  user: {
+    name: "User",
+    password: "12345"
+  }
+},
+sensitiveFields: ["user.password"]
+```
+Only user.password is encrypted.
+
+### 🔸 Array of Objects
+```ts
+{
+  accounts: [
+    { email: "a@example.com", "token": "123" },
+    { email: "b@example.com", "token": "456" }
+  ]
+},
+sensitiveFields: ["accounts.*.token"]
+```
+🔒 Matches:
+ - accounts[0].token
+ - accounts[1].token
+
+### 🧠 Advanced Pattern Matching
+You can mix wildcards across multiple levels:
+```ts
+sensitiveFields: ["*.data.*.password", "users.*.tokens.*"]
+```
+🔒 Matches:
+ - Any object at root with a nested data.password
+ - All tokens of all users
+
+### ⚠️ Tips & Edge Cases
+| Case                      | Behavior                              |
+| ------------------------- | ------------------------------------- |
+| **Missing path**          | Ignored silently                      |
+| **Non-string values**     | Serialized to string, then encrypted  |
+| **Nested objects/arrays** | JSON-stringified and encrypted        |
+| **Incorrect path**        | No exception thrown — path is skipped |
