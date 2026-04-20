@@ -37,10 +37,6 @@ The Smart Data Proxy offers several powerful features:
 
 Choose which fields in your JSON payload require encryption, allowing you to protect only the sensitive data while leaving non-sensitive data in the clear.
 
-### Data Classification
-
-Associate classification tags with your encrypted data to enable fine-grained access control and regulatory compliance.
-
 ### Request Forwarding
 
 Optionally forward the modified request (with encrypted data) to another service, allowing for seamless integration with existing workflows.
@@ -77,7 +73,6 @@ You can also include these optional headers:
 
 | Header | Description |
 |--------|-------------|
-| `X-Qanapi-Destination` | A URL to forward the request to after encryption instead of returning the encrypted data to the client |
 | `X-Qanapi-Classification` | The classification level of the data (e.g., `cui`, `health`, `financial`) |
 
 ## Use Cases

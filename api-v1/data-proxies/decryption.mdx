@@ -51,7 +51,6 @@ You can also include these optional headers:
 
 | Header | Example Value | Description |
 |--------|---------------|-------------|
-| `X-Qanapi-Classification` | `cui` | Verifies that the data has the specified classification |
 | `X-Qanapi-Destination` | `https://example.com/api` | Forwards the decrypted data to this URL |
 
 ## Sample Response
@@ -91,15 +90,13 @@ curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
 }'
 ```
 
-## Access Control and Classification Verification
+## Access Control
 
 When decrypting data, Qanapi verifies:
 
 1. **Authentication**: Your API key must be valid
-2. **Authorization**: Your API key must have permission to decrypt the data
-3. **Classification**: If you specify a classification in the request, it must match the classification assigned during encryption
 
-If any of these checks fail, the decryption request will be denied.
+If this check fails, the decryption request will be denied.
 
 ## Handling Partially Encrypted Data
 
@@ -133,10 +130,9 @@ Common errors when decrypting data include:
 ## Best Practices for Decryption
 
 1. **Decrypt only when necessary** - Only decrypt data when it needs to be used in plaintext
-2. **Verify classifications** - Use the classification verification to ensure data integrity
-3. **Secure your environment** - Ensure your application environment is secure when handling decrypted data
-4. **Implement proper error handling** - Handle decryption errors gracefully in your application
-5. **Clear decrypted data** - Remove decrypted sensitive data from memory when no longer needed
+2. **Secure your environment** - Ensure your application environment is secure when handling decrypted data
+3. **Implement proper error handling** - Handle decryption errors gracefully in your application
+4. **Clear decrypted data** - Remove decrypted sensitive data from memory when no longer needed
 
 ## Next Steps
 

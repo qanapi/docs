@@ -38,25 +38,6 @@ Response:
 }
 ```
 
-## Encrypting with Classification
-
-Encrypt data with a classification tag:
-
-```bash
-curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
---header 'X-Qanapi-Authorization: your_api_key' \
---header 'X-Qanapi-Mode: encrypt' \
---header 'X-Qanapi-Fields: cardNumber,cvv' \
---header 'X-Qanapi-Classification: financial' \
---header 'Content-Type: application/json' \
---data '{
-    "customerId": "cust_12345",
-    "cardNumber": "4111111111111111",
-    "cvv": "123",
-    "expiryDate": "12/25"
-}'
-```
-
 ## Decrypting Data
 
 Decrypt previously encrypted fields:

@@ -59,48 +59,6 @@ axios({
   });
 ```
 
-### Encrypting with Classification
-
-Encrypt data with a classification tag:
-
-```javascript
-const axios = require('axios');
-
-// Your Qanapi configuration
-const tenantUrl = 'https://your-tenant.qanapi.cloud';
-const projectId = 'your-project-id';
-const apiKey = 'your-api-key';
-
-// Payment data to encrypt
-const data = {
-  customerId: 'cust_12345',
-  cardNumber: '4111111111111111',
-  cvv: '123',
-  expiryDate: '12/25'
-};
-
-// Make the request
-axios({
-  method: 'post',
-  url: `${tenantUrl}/proxy/${projectId}`,
-  headers: {
-    'X-Qanapi-Authorization': apiKey,
-    'X-Qanapi-Mode': 'encrypt',
-    'X-Qanapi-Fields': 'cardNumber,cvv',
-    'X-Qanapi-Classification': 'financial',
-    'Content-Type': 'application/json'
-  },
-  data: data
-})
-  .then(response => {
-    console.log('Encrypted data with classification:');
-    console.log(JSON.stringify(response.data, null, 2));
-  })
-  .catch(error => {
-    console.error('Error encrypting data:', error.response ? error.response.data : error.message);
-  });
-```
-
 ### Decrypting Data
 
 Decrypt previously encrypted fields:
@@ -207,21 +165,16 @@ class QanapiClient {
    * 
    * @param {Object} data - The data to encrypt
    * @param {String} fields - Comma-separated list of fields to encrypt
-   * @param {String} classification - Optional classification tag
    * @param {String} destination - Optional URL to forward the encrypted data
    * @returns {Promise} - Promise resolving to the response data
    */
-  async encrypt(data, fields, classification = null, destination = null) {
+  async encrypt(data, fields, destination = null) {
     const headers = {
       'X-Qanapi-Authorization': this.apiKey,
       'X-Qanapi-Mode': 'encrypt',
       'X-Qanapi-Fields': fields,
       'Content-Type': 'application/json'
     };
-
-    if (classification) {
-      headers['X-Qanapi-Classification'] = classification;
-    }
 
     if (destination) {
       headers['X-Qanapi-Destination'] = destination;
