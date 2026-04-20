@@ -90,14 +90,13 @@ curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
 }'
 ```
 
-## Access Control and Classification Verification
+## Access Control
 
 When decrypting data, Qanapi verifies:
 
 1. **Authentication**: Your API key must be valid
-2. **Authorization**: Your API key must have permission to decrypt the data
 
-If any of these checks fail, the decryption request will be denied.
+If this check fails, the decryption request will be denied.
 
 ## Handling Partially Encrypted Data
 
