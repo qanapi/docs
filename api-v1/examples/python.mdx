@@ -57,48 +57,6 @@ encrypted_data = response.json()
 print(json.dumps(encrypted_data, indent=2))
 ```
 
-## Encrypting with Classification
-
-Encrypt data with a classification tag:
-
-```python
-import requests
-import json
-
-# Your Qanapi configuration
-tenant_url = "https://your-tenant.qanapi.cloud"
-project_id = "your-project-id"
-api_key = "your-api-key"
-
-# Payment data to encrypt
-data = {
-    "customerId": "cust_12345",
-    "cardNumber": "4111111111111111",
-    "cvv": "123",
-    "expiryDate": "12/25"
-}
-
-# Headers for the request
-headers = {
-    "X-Qanapi-Authorization": api_key,
-    "X-Qanapi-Mode": "encrypt",
-    "X-Qanapi-Fields": "cardNumber,cvv",
-    "X-Qanapi-Classification": "financial",
-    "Content-Type": "application/json"
-}
-
-# Make the request
-response = requests.post(
-    f"{tenant_url}/proxy/{project_id}",
-    headers=headers,
-    json=data
-)
-
-# Print the response
-encrypted_data = response.json()
-print(json.dumps(encrypted_data, indent=2))
-```
-
 ## Decrypting Data
 
 Decrypt previously encrypted fields:
@@ -251,14 +209,13 @@ class QanapiClient:
         self.api_key = api_key
         self.proxy_url = f"{tenant_url}/proxy/{project_id}"
     
-    def encrypt(self, data, fields, classification=None, destination=None):
+    def encrypt(self, data, fields, destination=None):
         """
         Encrypt specified fields in the data.
         
         Args:
             data (dict): The data to encrypt
             fields (str): Comma-separated list of fields to encrypt
-            classification (str, optional): Classification tag
             destination (str, optional): URL to forward the encrypted data
             
         Returns:
@@ -270,9 +227,6 @@ class QanapiClient:
             "X-Qanapi-Fields": fields,
             "Content-Type": "application/json"
         }
-        
-        if classification:
-            headers["X-Qanapi-Classification"] = classification
             
         if destination:
             headers["X-Qanapi-Destination"] = destination
@@ -334,8 +288,7 @@ if __name__ == "__main__":
     # Encrypt data
     encrypted_data = client.encrypt(
         data=user_data,
-        fields="ssn",
-        classification="pii"
+        fields="ssn"
     )
     print("Encrypted data:")
     print(json.dumps(encrypted_data, indent=2))
