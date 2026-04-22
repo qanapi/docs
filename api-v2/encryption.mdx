@@ -2,7 +2,7 @@
 title: Encryption API
 ---
 
-## 🔒 Encrypt your data with simplicity and flexibility
+## Encrypt your data with simplicity and flexibility
 
 The encryption API supports multiple payload types:
 
@@ -129,13 +129,13 @@ Sample response:
 > Supports `destination` URLs with embedded basic auth  
 > (e.g. `https://username:password@host/path`)
 
-# 🔐 Sensitive Fields DSL – Targeting Deep Structures
+# Sensitive Fields DSL – Targeting Deep Structures
 
 The `sensitiveFields` array is a **dot-notated DSL (Domain-Specific Language)** that specifies which fields in a JSON payload should be **encrypted** or **decrypted**.
 
 ---
 
-## 🧭 Syntax Overview
+## Syntax Overview
 
 | Pattern | Description                       |
 |---------|-----------------------------------|
@@ -144,7 +144,7 @@ The `sensitiveFields` array is a **dot-notated DSL (Domain-Specific Language)** 
 
 ---
 
-## 🎯 Examples of Patterns
+## Examples of Patterns
 
 | Feature         | Example                      | Meaning                                                             |
 |-----------------|------------------------------|---------------------------------------------------------------------|
@@ -155,9 +155,9 @@ The `sensitiveFields` array is a **dot-notated DSL (Domain-Specific Language)** 
 
 ---
 
-## 🧪 Usage Examples
+## Usage Examples
 
-### 🔸 Flat Payload
+### Flat Payload
 
 ```ts
 {
@@ -169,7 +169,7 @@ sensitiveFields: ["password"]
 Only password field will be encrypted.
 
 
-### 🔸 Nested Object
+### Nested Object
 ```ts
 {
   user: {
@@ -181,7 +181,7 @@ sensitiveFields: ["user.password"]
 ```
 Only user.password is encrypted.
 
-### 🔸 Array of Objects
+### Array of Objects
 ```ts
 {
   accounts: [
@@ -191,20 +191,20 @@ Only user.password is encrypted.
 },
 sensitiveFields: ["accounts.*.token"]
 ```
-🔒 Matches:
+Matches:
  - accounts[0].token
  - accounts[1].token
 
-### 🧠 Advanced Pattern Matching
+### Advanced Pattern Matching
 You can mix wildcards across multiple levels:
 ```ts
 sensitiveFields: ["*.data.*.password", "users.*.tokens.*"]
 ```
-🔒 Matches:
+Matches:
  - Any object at root with a nested data.password
  - All tokens of all users
 
-### ⚠️ Tips & Edge Cases
+### Tips & Edge Cases
 | Case                      | Behavior                              |
 | ------------------------- | ------------------------------------- |
 | **Missing path**          | Ignored silently                      |
