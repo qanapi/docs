@@ -51,7 +51,6 @@ You can also include these optional headers:
 
 | Header | Example Value | Description |
 |--------|---------------|-------------|
-| `X-Qanapi-Classification` | `cui` | Assigns a classification tag to the encrypted data |
 | `X-Qanapi-Destination` | `https://example.com/api` | Forwards the encrypted data to this URL |
 
 ## Sample Response
@@ -108,24 +107,6 @@ curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
 }'
 ```
 
-## Using Data Classifications
-
-Adding a classification to your encrypted data helps with access control and compliance:
-
-```bash
-curl --location 'https://your-tenant.qanapi.cloud/proxy/your-project-id' \
---header 'X-Qanapi-Authorization: your_api_key' \
---header 'X-Qanapi-Mode: encrypt' \
---header 'X-Qanapi-Fields: ssn,dob' \
---header 'X-Qanapi-Classification: pii' \
---header 'Content-Type: application/json' \
---data '{
-    "name": "Jane Smith",
-    "ssn": "123-45-6789",
-    "dob": "1980-01-01"
-}'
-```
-
 ## Error Handling
 
 Common errors when encrypting data include:
@@ -140,10 +121,9 @@ Common errors when encrypting data include:
 ## Best Practices for Encryption
 
 1. **Only encrypt sensitive fields** - Don't encrypt everything, focus on sensitive data
-2. **Use meaningful classifications** - Apply appropriate classification tags for better access control
-3. **Store encrypted data securely** - Even though the data is encrypted, follow good security practices
-4. **Document encrypted fields** - Keep track of which fields are encrypted in your application
-5. **Handle errors gracefully** - Implement proper error handling in your application
+2. **Store encrypted data securely** - Even though the data is encrypted, follow good security practices
+3. **Document encrypted fields** - Keep track of which fields are encrypted in your application
+4. **Handle errors gracefully** - Implement proper error handling in your application
 
 ## Next Steps
 
