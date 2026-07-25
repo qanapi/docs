@@ -15,6 +15,30 @@ html.light {
     #almond-background-color {
         background-color: #FFFFFF;
     }
+
+    /* Match sidebar scrollbar style */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #e2e8f0; /* Subtle light gray */
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #e2e8f0 transparent;
+    }
 }
 
 html.dark {
@@ -33,5 +57,29 @@ html.dark {
 
     #almond-background-color {
         background-color: #232c32;
+    }
+
+    /* Match sidebar scrollbar style */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #3f4a52; /* Subtle dark gray */
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #4b5563;
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #3f4a52 transparent;
     }
 }
