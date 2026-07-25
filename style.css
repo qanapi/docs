@@ -1,0 +1,37 @@
+html.light {
+    header#navbar {
+        background-color: #FFFFFF;
+    }
+
+    div.almond-layout {
+        background-color: #FFFFFF;
+        color:            #161D21;
+    }
+
+    div.almond-layout a {
+        color: #161D21;
+    }
+
+    #almond-background-color {
+        background-color: #FFFFFF;
+    }
+}
+
+html.dark {
+    header#navbar {
+        background-color: #232c32;
+    }
+
+    div.almond-layout {
+        background-color: #232c32;
+        color:            #F5F7F7;
+    }
+
+    div.almond-layout a {
+        color: #F5F7F7;
+    }
+
+    #almond-background-color {
+        background-color: #232c32;
+    }
+}

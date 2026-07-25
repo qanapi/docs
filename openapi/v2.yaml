@@ -1,0 +1,129 @@
+openapi: 3.0.0
+info:
+  title: Qanapi API v2
+  version: 2.0.0
+  description: Qanapi API version 2
+servers:
+  - url: https://your-account.qanapi.cloud/api/v2
+paths:
+  /encrypt:
+    post:
+      summary: Encrypt data
+      responses:
+        '200':
+          description: Encrypted data
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /decrypt:
+    post:
+      summary: Decrypt data
+      responses:
+        '200':
+          description: Decrypted data
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /auth/login:
+    post:
+      summary: Login
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /auth/refresh:
+    post:
+      summary: Refresh token
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /auth/revoke:
+    post:
+      summary: Revoke token
+      responses:
+        '204':
+          description: Token revoked
+  /auth/logout:
+    post:
+      summary: Logout
+      responses:
+        '204':
+          description: Logged out
+  /auth/userdetails:
+    get:
+      summary: Get user details
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /api-keys/{apiKey}/revoke:
+    patch:
+      x-mint:
+        href: /v2/api-keys/{apiKey}/revoke
+        metadata:
+          title: Revoke API Key (v2)
+          sidebarTitle: Revoke API Key
+      summary: Revoke API Key
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: API Key revoked
+  /api-keys/{apiKey}/rotate:
+    patch:
+      x-mint:
+        href: /v2/api-keys/{apiKey}/rotate
+        metadata:
+          title: Rotate API Key (v2)
+          sidebarTitle: Rotate API Key
+      summary: Rotate API Key
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API Key rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-Qanapi-Authorization
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - ApiKey: []
+    BearerAuth: []

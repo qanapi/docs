@@ -1,129 +1,145 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "almond",
   "name": "Qanapi Docs",
   "colors": {
-    "primary": "#08a046",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#08A046",
+    "light": "#08A046",
+    "dark": "#08A046"
   },
-  "favicon": "/favicon.svg",
+  "background": {
+    "color": {
+      "light": "#F5F7F7",
+      "dark": "#161D21"
+    }
+  },
+  "anchors": {
+    "color": {
+      "dark": "#232C32"
+    }
+  },
+  "styling": {
+    "codeblocks": {
+      "theme": {
+        "light": "github-light",
+        "dark": "github-dark"
+      }
+    }
+  },
+  "fonts": {
+    "family": "Poppins, sans-serif"
+  },
+  "favicon": "/favicon.ico",
+  "api": {
+    "playground": {
+      "display": "none"
+    },
+    "openapi": [
+      "openapi/v1.yaml",
+      "openapi/v2.yaml",
+      "openapi/v3.yaml"
+    ]
+  },
   "navigation": {
-    "tabs": [
+    "versions": [
       {
-        "tab": "Getting Started",
+        "version": "3.x",
+        "default": true,
+        "tag": "latest",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Containers",
             "pages": [
-              "introduction",
-              "quickstart"
+              "openapi/v3.yaml GET /containers",
+              "openapi/v3.yaml POST /containers",
+              "openapi/v3.yaml GET /containers/{container}",
+              "openapi/v3.yaml PUT /containers/{container}",
+              "openapi/v3.yaml DELETE /containers/{container}"
             ]
           },
           {
-            "group": "Registration & Setup",
+            "group": "Encryption",
             "pages": [
-              "getting-started/registration",
-              "getting-started/dashboard-navigation",
-              "getting-started/creating-projects"
+              "openapi/v3.yaml POST /encryption/{proxy}/encrypt",
+              "openapi/v3.yaml POST /encryption/{proxy}/decrypt"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "Project Management",
-        "groups": [
+          },
           {
-            "group": "Project Overview",
+            "group": "Users",
             "pages": [
-              "project-management/overview"
+              "openapi/v3.yaml GET /users",
+              "openapi/v3.yaml POST /users",
+              "openapi/v3.yaml GET /users/me",
+              "openapi/v3.yaml GET /users/{user}",
+              "openapi/v3.yaml PATCH /users/{user}",
+              "openapi/v3.yaml DELETE /users/{user}",
+              "openapi/v3.yaml PATCH /users/{user}/restore"
             ]
           },
           {
             "group": "API Keys",
             "pages": [
-              "project-management/api-keys"
+              "openapi/v3.yaml GET /api-keys",
+              "openapi/v3.yaml GET /api-keys/{apiKey}",
+              "openapi/v3.yaml POST /api-keys/{apiKey}/rotate",
+              "openapi/v3.yaml POST /api-keys/{apiKey}/revoke"
             ]
           },
           {
-            "group": "Data Classification",
+            "group": "Logs",
             "pages": [
-              "project-management/data-classifications"
+              "openapi/v3.yaml GET /logs/activity",
+              "openapi/v3.yaml GET /logs/api",
+              "openapi/v3.yaml GET /logs/qanapi-flow"
             ]
           }
         ]
       },
       {
-        "tab": "API & Data Proxies",
+        "version": "2.x",
         "groups": [
           {
-            "group": "Smart Data Proxies",
+            "group": "Authentication",
             "pages": [
-              "api-v1/data-proxies/overview",
-              "api-v1/data-proxies/encryption",
-              "api-v1/data-proxies/decryption",
-              "api-v1/data-proxies/forwarding"
+              "openapi/v2.yaml POST /auth/login",
+              "openapi/v2.yaml POST /auth/refresh",
+              "openapi/v2.yaml POST /auth/revoke",
+              "openapi/v2.yaml POST /auth/logout",
+              "openapi/v2.yaml GET /auth/userdetails"
             ]
           },
           {
-            "group": "API v1 Usage Examples",
+            "group": "Encryption",
             "pages": [
-              "api-v1/examples/curl",
-              "api-v1/examples/python",
-              "api-v1/examples/javascript"
+              "openapi/v2.yaml POST /encrypt",
+              "openapi/v2.yaml POST /decrypt"
             ]
           },
           {
-            "group": "API v2",
+            "group": "API Keys",
             "pages": [
-              "/api-v2/quick-start",
-              "/api-v2/setup",
-              "/api-v2/auth",
-              "/api-v2/encryption",
-              "/api-v2/decryption",
-              "/api-v2/security",
-              "/api-v2/links"
+              "openapi/v2.yaml PATCH /api-keys/{apiKey}/rotate",
+              "openapi/v2.yaml PATCH /api-keys/{apiKey}/revoke"
             ]
           }
         ]
       },
       {
-        "tab": "Administration",
+        "version": "1.x",
         "groups": [
           {
-            "group": "Team Management",
+            "group": "Proxy",
             "pages": [
-              "administration/team-management"
-            ]
-          },
-          {
-            "group": "Billing",
-            "pages": [
-              "administration/billing"
+              "openapi/v1.yaml POST /proxy/{proxy}"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Website",
-          "href": "https://www.qanapi.com",
-          "icon": "globe"
-        },
-        {
-          "anchor": "Dashboard",
-          "href": "https://qanapi.cloud",
-          "icon": "chart-line"
-        },
-        {
-          "anchor": "GitHub",
-          "href": "https://github.com/qanapi",
-          "icon": "github"
-        }
-      ]
-    }
+    ]
+  },
+  "modeToggle": {
+    "default": "dark",
+    "isHidden": false
   },
   "logo": {
     "light": "/logo/light.svg",

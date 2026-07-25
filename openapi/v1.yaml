@@ -1,0 +1,68 @@
+openapi: 3.0.0
+info:
+  title: Qanapi API v1
+  version: 1.0.0
+  description: Legacy Qanapi API version 1
+servers:
+  - url: https://your-account.qanapi.cloud
+paths:
+  /proxy/{proxy}:
+    post:
+      summary: Proxy request
+      description: Encrypts or decrypts data based on configuration and forwards it if configured.
+      responses:
+        '200':
+          $ref: '#/components/responses/ProxyResponse'
+    parameters:
+      - $ref: '#/components/parameters/proxy'
+      - $ref: '#/components/parameters/qanapiMode'
+      - $ref: '#/components/parameters/qanapiFields'
+      - $ref: '#/components/parameters/qanapiDestination'
+components:
+  parameters:
+    proxy:
+      name: proxy
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The proxy slug of your encryption container
+    qanapiMode:
+      name: x-qanapi-mode
+      in: header
+      required: true
+      schema:
+        type: string
+        enum:
+          - encrypt
+          - decrypt
+      description: Tells the route whether to encrypt or decrypt the payload.
+    qanapiFields:
+      name: x-qanapi-fields
+      in: header
+      required: true
+      schema:
+        type: string
+      description: Comma separated list of fields to encrypt
+    qanapiDestination:
+      name: x-qanapi-destination
+      in: header
+      required: false
+      schema:
+        type: string
+      description: A URL to forward the encrypted data to.  All non-qanapi headers will be forwarded to the destination.
+  responses:
+    ProxyResponse:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-Qanapi-Authorization
+security:
+  - ApiKey: []

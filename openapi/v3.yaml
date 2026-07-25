@@ -1,0 +1,571 @@
+openapi: 3.0.0
+info:
+  title: Qanapi API v3
+  version: 3.0.0
+  description: Qanapi API version 3
+servers:
+  - url: https://your-account.qanapi.cloud/api/v3
+    description: Production server
+paths:
+  /containers:
+    get:
+      summary: List containers
+      responses:
+        '200':
+          description: List of containers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Container'
+    post:
+      summary: Create container
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - provider
+                    - encryption
+                name:
+                  type: string
+                  maxLength: 255
+                provider:
+                  type: string
+                  enum:
+                    - google
+                  description: Required if type is 'provider'
+              required:
+                - type
+                - name
+      responses:
+        '201':
+          description: Container created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Container'
+  /containers/{container}:
+    parameters:
+      - name: container
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get container
+      responses:
+        '200':
+          description: Container details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Container'
+    put:
+      summary: Update container
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+              required:
+                - name
+      responses:
+        '200':
+          description: Container updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Container'
+    delete:
+      summary: Delete container
+      responses:
+        '204':
+          description: Container deleted
+  /encryption/{proxy}/encrypt:
+    post:
+      summary: Encrypt data
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The proxy slug of the encryption container.
+        - name: x-qanapi-fields
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Comma separated list of fields to encrypt
+        - name: x-qanapi-destination
+          in: header
+          required: false
+          schema:
+            type: string
+          description: A URL to forward the encrypted data to.  All non-qanapi headers will be forwarded to the destination.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Encrypted data
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /encryption/{proxy}/decrypt:
+    post:
+      summary: Decrypt data
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The proxy slug of the encryption container.
+        - name: x-qanapi-fields
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Comma separated list of fields to decrypt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: Decrypted data
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+  /users:
+    get:
+      summary: List users
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  description: Name of the role to assign
+              required:
+                - email
+                - role
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/me:
+    get:
+      summary: Get current user
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /users/{user}:
+    parameters:
+      - name: user
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get user
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    patch:
+      summary: Update user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                role:
+                  type: string
+                two_factor_enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      summary: Delete user
+      responses:
+        '204':
+          description: User deleted
+  /users/{user}/restore:
+    patch:
+      summary: Restore user
+      parameters:
+        - name: user
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /api-keys:
+    get:
+      summary: List API Keys
+      responses:
+        '200':
+          description: List of API Keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+  /api-keys/{apiKey}:
+    get:
+      summary: Get API Key
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: API Key details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+  /api-keys/{apiKey}/rotate:
+    post:
+      x-mint:
+        href: /v3/api-keys/{apiKey}/rotate
+        metadata:
+          title: Rotate API Key
+          sidebarTitle: Rotate API Key
+      summary: Rotate API Key
+      operationId: rotateApiKey
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+            description: API Key rotated
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    key:
+                      $ref: '#/components/schemas/ApiKeyString'
+  /api-keys/{apiKey}/revoke:
+    post:
+      x-mint:
+        href: /v3/api-keys/{apiKey}/revoke
+        metadata:
+          title: Revoke API Key
+          sidebarTitle: Revoke API Key
+      summary: Revoke API Key
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: API Key revoked
+  /logs/activity:
+    get:
+      summary: Get activity logs
+      responses:
+        '200':
+          description: Activity logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityLog'
+  /logs/api:
+    get:
+      summary: Get API logs
+      responses:
+        '200':
+          description: API logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiLog'
+  /logs/qanapi-flow:
+    get:
+      summary: Get Qanapi Flow logs
+      responses:
+        '200':
+          description: Qanapi Flow logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QanapiFlowLog'
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        two_factor_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    Role:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    Permission:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Container:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Value'
+    Value:
+      type: object
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ApiKeyString:
+      type: string
+      pattern: '^qapi_.*'
+      example: qapi_1234567890abcdef1234567890abcdef
+    ApiKey:
+      type: object
+      required:
+        - id
+        - prefix
+        - status
+      properties:
+        id:
+          type: string
+          example: "1"
+        prefix:
+          type: string
+          example: "qapi_"
+        status:
+          type: string
+          enum:
+            - active
+            - revoked
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        user:
+          $ref: '#/components/schemas/User'
+        configurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Container'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    ActivityLog:
+      type: object
+      properties:
+        action:
+          type: string
+        description:
+          type: string
+        ip:
+          type: string
+          nullable: true
+        when:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+    ApiLog:
+      type: object
+      properties:
+        api_key_id:
+          type: integer
+        domain:
+          type: string
+        endpoint:
+          type: string
+        method:
+          type: string
+        status_code:
+          type: integer
+        configuration_id:
+          type: integer
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        proxied:
+          type: boolean
+        proxied_to:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        api_key:
+          $ref: '#/components/schemas/ApiKey'
+    QanapiFlowLog:
+      type: object
+      properties:
+        configuration_id:
+          type: integer
+          nullable: true
+        type:
+          type: string
+        action:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-Qanapi-Authorization
+security:
+  - ApiKey: []
