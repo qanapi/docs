@@ -316,14 +316,14 @@ paths:
             type: integer
       responses:
         '200':
-            description: API Key rotated
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    key:
-                      $ref: '#/components/schemas/ApiKeyString'
+          description: API Key rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    $ref: '#/components/schemas/ApiKeyString'
   /api-keys/{apiKey}/revoke:
     post:
       x-mint:
@@ -568,4 +568,4 @@ components:
       in: header
       name: X-Qanapi-Authorization
 security:
-  - ApiKey: []
+  - ApiKey: [ ]
