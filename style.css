@@ -17,8 +17,9 @@ html.light {
     }
 
     /* Match sidebar scrollbar style */
+
     ::-webkit-scrollbar {
-        width: 6px;
+        width:  6px;
         height: 6px;
     }
 
@@ -27,7 +28,7 @@ html.light {
     }
 
     ::-webkit-scrollbar-thumb {
-        background: #e2e8f0; /* Subtle light gray */
+        background:    #e2e8f0; /* Subtle light gray */
         border-radius: 10px;
     }
 
@@ -60,8 +61,9 @@ html.dark {
     }
 
     /* Match sidebar scrollbar style */
+
     ::-webkit-scrollbar {
-        width: 6px;
+        width:  6px;
         height: 6px;
     }
 
@@ -70,7 +72,7 @@ html.dark {
     }
 
     ::-webkit-scrollbar-thumb {
-        background: #3f4a52; /* Subtle dark gray */
+        background:    #3f4a52; /* Subtle dark gray */
         border-radius: 10px;
     }
 
@@ -82,4 +84,43 @@ html.dark {
         scrollbar-width: thin;
         scrollbar-color: #3f4a52 transparent;
     }
+}
+
+/* Specific fix for playground API route vertical alignment */
+.border-standard.rounded-2xl .method-pill {
+    display:         inline-flex !important;
+    align-items:     center !important;
+    justify-content: center !important;
+    line-height:     1 !important;
+    height:          1.5rem !important;
+    margin-top:      0 !important;
+    margin-bottom:   0 !important;
+}
+
+/* 
+   Target the path container specifically. 
+   Using a more aggressive approach to force centering.
+*/
+.border-standard.rounded-2xl [data-component-part="scroll-area-content"] .font-mono {
+    display:         flex !important;
+    align-items:     center !important;
+    height:          1.5rem !important;
+    line-height:     1.5rem !important; /* Match height for vertical centering */
+}
+
+.border-standard.rounded-2xl [data-component-part="scroll-area-content"] .font-mono > div:not(.absolute) {
+    display:         inline-flex !important;
+    align-items:     center !important;
+    height:          1.5rem !important;
+    line-height:     1 !important;
+    padding:         0 !important;
+    margin:          0 !important;
+    transform:       translateY(0.35rem) !important; /* Increased nudge down based on "moved slightly but not all the way" feedback */
+}
+
+/* Ensure the wrapper doesn't have weird padding pushing it up */
+.border-standard.rounded-2xl [data-component-part="scroll-area-viewport"] {
+    display:     flex !important;
+    align-items: center !important;
+    height:      100% !important;
 }
