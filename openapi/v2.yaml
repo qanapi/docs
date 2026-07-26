@@ -33,6 +33,16 @@ paths:
       summary: Login
       security:
         - ApiKey: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
       responses:
         '200':
           description: Successful login
@@ -41,6 +51,21 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+                example: {
+                  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3FhbmFwaS50cmF2aXMucWFuYXBpLmRl",
+                  "token_type": "bearer",
+                  "expires_in": 3600
+                }
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                example: {
+                  "error": "Unauthorized"
+                }
   /auth/refresh:
     post:
       summary: Refresh token
@@ -52,6 +77,11 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+                example: {
+                  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3FhbmFwaS50cmF2aXMucWFuYXBpLmRl",
+                  "token_type": "bearer",
+                  "expires_in": 3600
+                }
   /auth/revoke:
     post:
       summary: Revoke token
@@ -64,6 +94,15 @@ paths:
       responses:
         '204':
           description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                example: {
+                  "user": "jsmith@gmail.com",
+                  "message": "Successfully logged out"
+                }
   /auth/userdetails:
     get:
       summary: Get user details
@@ -73,8 +112,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: true
+                $ref: '#/components/schemas/User'
   /api-keys/{apiKey}/revoke:
     patch:
       x-mint:
@@ -115,6 +153,190 @@ paths:
                 type: object
                 additionalProperties: true
 components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        two_factor_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    Role:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    Permission:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Container:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Value'
+    Value:
+      type: object
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ApiKeyString:
+      type: string
+      pattern: '^qapi_.*'
+      example: qapi_1234567890abcdef1234567890abcdef
+    ApiKey:
+      type: object
+      required:
+        - id
+        - prefix
+        - status
+      properties:
+        id:
+          type: string
+          example: "1"
+        prefix:
+          type: string
+          example: "qapi_"
+        status:
+          type: string
+          enum:
+            - active
+            - revoked
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        user:
+          $ref: '#/components/schemas/User'
+        configurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Container'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    ActivityLog:
+      type: object
+      properties:
+        action:
+          type: string
+        description:
+          type: string
+        ip:
+          type: string
+          nullable: true
+        when:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+    ApiLog:
+      type: object
+      properties:
+        api_key_id:
+          type: integer
+        domain:
+          type: string
+        endpoint:
+          type: string
+        method:
+          type: string
+        status_code:
+          type: integer
+        configuration_id:
+          type: integer
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        proxied:
+          type: boolean
+        proxied_to:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        api_key:
+          $ref: '#/components/schemas/ApiKey'
+    QanapiFlowLog:
+      type: object
+      properties:
+        configuration_id:
+          type: integer
+          nullable: true
+        type:
+          type: string
+        action:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
   securitySchemes:
     ApiKey:
       type: apiKey
