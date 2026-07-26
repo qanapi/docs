@@ -4,7 +4,14 @@ info:
   version: 2.0.0
   description: Qanapi API version 2
 servers:
-  - url: https://your-account.qanapi.cloud/api/v2
+  - url: https://{subdomain}.qanapi.cloud/api/v2
+    description: The Qanapi API server
+    variables: {
+      "subdomain": {
+        "default": "",
+        "description": "Customer-specific subdomain."
+      },
+    }
 paths:
   "/encrypt":
     post:

@@ -4,8 +4,14 @@ info:
   version: 3.0.0
   description: Qanapi API version 3
 servers:
-  - url: https://your-account.qanapi.cloud/api/v3
-    description: Production server
+  - url: https://{subdomain}.qanapi.cloud/api/v3
+    description: The Qanapi API server
+    variables: {
+      "subdomain": {
+        "default": "",
+        "description": "Customer-specific subdomain."
+      },
+    }
 paths:
   "/encryption/{proxy}/encrypt":
     post:

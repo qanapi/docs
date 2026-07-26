@@ -38,105 +38,123 @@
     ]
   },
   "navigation": {
-    "versions": [
+    "tabs": [
       {
-        "version": "3.x",
-        "default": true,
-        "tag": "latest",
+        "tab": "Documentation",
+        "icon": "book-open",
         "groups": [
           {
-            "group": "Containers",
-            "openapi": "openapi/v3.yaml",
+            "group": "Get Started",
             "pages": [
-              "GET /containers",
-              "POST /containers",
-              "GET /containers/{container}",
-              "PUT /containers/{container}",
-              "DELETE /containers/{container}"
-            ]
-          },
-          {
-            "group": "Encryption",
-            "openapi": "openapi/v3_encryption.yaml",
-            "pages": [
-              "POST /encryption/{proxy}/encrypt",
-              "POST /encryption/{proxy}/decrypt"
-            ]
-          },
-          {
-            "group": "Users",
-            "openapi": "openapi/v3.yaml",
-            "pages": [
-              "GET /users",
-              "POST /users",
-              "GET /users/me",
-              "GET /users/{user}",
-              "PATCH /users/{user}",
-              "DELETE /users/{user}",
-              "PATCH /users/{user}/restore"
-            ]
-          },
-          {
-            "group": "API Keys",
-            "openapi": "openapi/v3.yaml",
-            "pages": [
-              "GET /api-keys",
-              "GET /api-keys/{apiKey}",
-              "POST /api-keys/{apiKey}/rotate",
-              "POST /api-keys/{apiKey}/revoke"
-            ]
-          },
-          {
-            "group": "Logs",
-            "openapi": "openapi/v3.yaml",
-            "pages": [
-              "GET /logs/activity",
-              "GET /logs/api",
-              "GET /logs/qanapi-flow"
+              "instructions/quickstart"
             ]
           }
         ]
       },
       {
-        "version": "2.x",
-        "groups": [
+        "tab": "API Reference",
+        "icon": "rectangle-terminal",
+        "versions": [
           {
-            "group": "Authentication",
-            "openapi": "openapi/v2.yaml",
-            "pages": [
-              "POST /auth/login",
-              "POST /auth/refresh",
-              "POST /auth/revoke",
-              "POST /auth/logout",
-              "GET /auth/userdetails"
+            "version": "3.x",
+            "default": true,
+            "tag": "latest",
+            "groups": [
+              {
+                "group": "Containers",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /containers",
+                  "POST /containers",
+                  "GET /containers/{container}",
+                  "PUT /containers/{container}",
+                  "DELETE /containers/{container}"
+                ]
+              },
+              {
+                "group": "Encryption",
+                "openapi": "openapi/v3_encryption.yaml",
+                "pages": [
+                  "POST /encryption/{proxy}/encrypt",
+                  "POST /encryption/{proxy}/decrypt"
+                ]
+              },
+              {
+                "group": "Users",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /users",
+                  "POST /users",
+                  "GET /users/me",
+                  "GET /users/{user}",
+                  "PATCH /users/{user}",
+                  "DELETE /users/{user}",
+                  "PATCH /users/{user}/restore"
+                ]
+              },
+              {
+                "group": "API Keys",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /api-keys",
+                  "GET /api-keys/{apiKey}",
+                  "POST /api-keys/{apiKey}/rotate",
+                  "POST /api-keys/{apiKey}/revoke"
+                ]
+              },
+              {
+                "group": "Logs",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /logs/activity",
+                  "GET /logs/api",
+                  "GET /logs/qanapi-flow"
+                ]
+              }
             ]
           },
           {
-            "group": "Encryption",
-            "openapi": "openapi/v2_encryption.yaml",
-            "pages": [
-              "POST /encrypt",
-              "POST /decrypt"
+            "version": "2.x",
+            "groups": [
+              {
+                "group": "Authentication",
+                "openapi": "openapi/v2.yaml",
+                "pages": [
+                  "POST /auth/login",
+                  "POST /auth/refresh",
+                  "POST /auth/revoke",
+                  "POST /auth/logout",
+                  "GET /auth/userdetails"
+                ]
+              },
+              {
+                "group": "Encryption",
+                "openapi": "openapi/v2_encryption.yaml",
+                "pages": [
+                  "POST /encrypt",
+                  "POST /decrypt"
+                ]
+              },
+              {
+                "group": "API Keys",
+                "openapi": "openapi/v2.yaml",
+                "pages": [
+                  "PATCH /api-keys/{apiKey}/rotate",
+                  "PATCH /api-keys/{apiKey}/revoke"
+                ]
+              }
             ]
           },
           {
-            "group": "API Keys",
-            "openapi": "openapi/v2.yaml",
-            "pages": [
-              "PATCH /api-keys/{apiKey}/rotate",
-              "PATCH /api-keys/{apiKey}/revoke"
-            ]
-          }
-        ]
-      },
-      {
-        "version": "1.x",
-        "groups": [
-          {
-            "group": "Proxy",
-            "openapi": "openapi/v1.yaml",
-            "pages": [
-              "POST /proxy/{proxy}"
+            "version": "1.x",
+            "groups": [
+              {
+                "group": "Proxy",
+                "openapi": "openapi/v1.yaml",
+                "pages": [
+                  "POST /proxy/{proxy}"
+                ]
+              }
             ]
           }
         ]
