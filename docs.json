@@ -13,11 +13,6 @@
       "dark": "#161D21"
     }
   },
-  "anchors": {
-    "color": {
-      "dark": "#232C32"
-    }
-  },
   "styling": {
     "codeblocks": {
       "theme": {
@@ -32,12 +27,14 @@
   "favicon": "/favicon.ico",
   "api": {
     "playground": {
-      "display": "none"
+      "display": "simple"
     },
     "openapi": [
       "openapi/v1.yaml",
       "openapi/v2.yaml",
-      "openapi/v3.yaml"
+      "openapi/v2_encryption.yaml",
+      "openapi/v3.yaml",
+      "openapi/v3_encryption.yaml"
     ]
   },
   "navigation": {
@@ -49,48 +46,53 @@
         "groups": [
           {
             "group": "Containers",
+            "openapi": "openapi/v3.yaml",
             "pages": [
-              "openapi/v3.yaml GET /containers",
-              "openapi/v3.yaml POST /containers",
-              "openapi/v3.yaml GET /containers/{container}",
-              "openapi/v3.yaml PUT /containers/{container}",
-              "openapi/v3.yaml DELETE /containers/{container}"
+              "GET /containers",
+              "POST /containers",
+              "GET /containers/{container}",
+              "PUT /containers/{container}",
+              "DELETE /containers/{container}"
             ]
           },
           {
             "group": "Encryption",
+            "openapi": "openapi/v3_encryption.yaml",
             "pages": [
-              "openapi/v3.yaml POST /encryption/{proxy}/encrypt",
-              "openapi/v3.yaml POST /encryption/{proxy}/decrypt"
+              "POST /encryption/{proxy}/encrypt",
+              "POST /encryption/{proxy}/decrypt"
             ]
           },
           {
             "group": "Users",
+            "openapi": "openapi/v3.yaml",
             "pages": [
-              "openapi/v3.yaml GET /users",
-              "openapi/v3.yaml POST /users",
-              "openapi/v3.yaml GET /users/me",
-              "openapi/v3.yaml GET /users/{user}",
-              "openapi/v3.yaml PATCH /users/{user}",
-              "openapi/v3.yaml DELETE /users/{user}",
-              "openapi/v3.yaml PATCH /users/{user}/restore"
+              "GET /users",
+              "POST /users",
+              "GET /users/me",
+              "GET /users/{user}",
+              "PATCH /users/{user}",
+              "DELETE /users/{user}",
+              "PATCH /users/{user}/restore"
             ]
           },
           {
             "group": "API Keys",
+            "openapi": "openapi/v3.yaml",
             "pages": [
-              "openapi/v3.yaml GET /api-keys",
-              "openapi/v3.yaml GET /api-keys/{apiKey}",
-              "openapi/v3.yaml POST /api-keys/{apiKey}/rotate",
-              "openapi/v3.yaml POST /api-keys/{apiKey}/revoke"
+              "GET /api-keys",
+              "GET /api-keys/{apiKey}",
+              "POST /api-keys/{apiKey}/rotate",
+              "POST /api-keys/{apiKey}/revoke"
             ]
           },
           {
             "group": "Logs",
+            "openapi": "openapi/v3.yaml",
             "pages": [
-              "openapi/v3.yaml GET /logs/activity",
-              "openapi/v3.yaml GET /logs/api",
-              "openapi/v3.yaml GET /logs/qanapi-flow"
+              "GET /logs/activity",
+              "GET /logs/api",
+              "GET /logs/qanapi-flow"
             ]
           }
         ]
@@ -100,26 +102,29 @@
         "groups": [
           {
             "group": "Authentication",
+            "openapi": "openapi/v2.yaml",
             "pages": [
-              "openapi/v2.yaml POST /auth/login",
-              "openapi/v2.yaml POST /auth/refresh",
-              "openapi/v2.yaml POST /auth/revoke",
-              "openapi/v2.yaml POST /auth/logout",
-              "openapi/v2.yaml GET /auth/userdetails"
+              "POST /auth/login",
+              "POST /auth/refresh",
+              "POST /auth/revoke",
+              "POST /auth/logout",
+              "GET /auth/userdetails"
             ]
           },
           {
             "group": "Encryption",
+            "openapi": "openapi/v2_encryption.yaml",
             "pages": [
-              "openapi/v2.yaml POST /encrypt",
-              "openapi/v2.yaml POST /decrypt"
+              "POST /encrypt",
+              "POST /decrypt"
             ]
           },
           {
             "group": "API Keys",
+            "openapi": "openapi/v2.yaml",
             "pages": [
-              "openapi/v2.yaml PATCH /api-keys/{apiKey}/rotate",
-              "openapi/v2.yaml PATCH /api-keys/{apiKey}/revoke"
+              "PATCH /api-keys/{apiKey}/rotate",
+              "PATCH /api-keys/{apiKey}/revoke"
             ]
           }
         ]
@@ -129,8 +134,9 @@
         "groups": [
           {
             "group": "Proxy",
+            "openapi": "openapi/v1.yaml",
             "pages": [
-              "openapi/v1.yaml POST /proxy/{proxy}"
+              "POST /proxy/{proxy}"
             ]
           }
         ]

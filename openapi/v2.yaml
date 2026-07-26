@@ -6,28 +6,6 @@ info:
 servers:
   - url: https://your-account.qanapi.cloud/api/v2
 paths:
-  /encrypt:
-    post:
-      summary: Encrypt data
-      responses:
-        '200':
-          description: Encrypted data
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-  /decrypt:
-    post:
-      summary: Decrypt data
-      responses:
-        '200':
-          description: Decrypted data
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
   /auth/login:
     post:
       summary: Login
@@ -51,21 +29,14 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
-                example: {
-                  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3FhbmFwaS50cmF2aXMucWFuYXBpLmRl",
-                  "token_type": "bearer",
-                  "expires_in": 3600
-                }
+                example:
+                  access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3FhbmFwaS50cmF2aXMucWFuYXBpLmRl"
+                  token_type: "bearer"
+                  expires_in: 3600
         '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: true
-                example: {
-                  "error": "Unauthorized"
-                }
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
   /auth/refresh:
     post:
       summary: Refresh token
@@ -77,32 +48,63 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
-                example: {
-                  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3FhbmFwaS50cmF2aXMucWFuYXBpLmRl",
-                  "token_type": "bearer",
-                  "expires_in": 3600
-                }
+                example:
+                  access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3FhbmFwaS50cmF2aXMucWFuYXBpLmRl"
+                  token_type: "bearer"
+                  expires_in: 3600
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: Invalid refresh token
   /auth/revoke:
     post:
       summary: Revoke token
       responses:
-        '204':
+        '200':
           description: Token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Token successfully revoked.
+        '400':
+          description: Failed to revoke token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: Failed to revoke token.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
   /auth/logout:
     post:
       summary: Logout
       responses:
-        '204':
+        '200':
           description: Logged out
           content:
             application/json:
               schema:
                 type: object
                 additionalProperties: true
-                example: {
-                  "user": "jsmith@gmail.com",
-                  "message": "Successfully logged out"
-                }
+                example:
+                  user: "jsmith@gmail.com"
+                  message: "Successfully logged out"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
   /auth/userdetails:
     get:
       summary: Get user details
@@ -113,13 +115,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
   /api-keys/{apiKey}/revoke:
     patch:
-      x-mint:
-        href: /v2/api-keys/{apiKey}/revoke
-        metadata:
-          title: Revoke API Key (v2)
-          sidebarTitle: Revoke API Key
+      x-mint: "/v2/api-keys/{apiKey}/revoke"
       summary: Revoke API Key
       parameters:
         - name: apiKey
@@ -128,15 +130,44 @@ paths:
           schema:
             type: string
       responses:
-        '204':
+        '200':
           description: API Key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  id:
+                    type: string
+                  revoked_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: API key is already revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: API key is already revoked.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api-keys/{apiKey}/rotate:
     patch:
-      x-mint:
-        href: /v2/api-keys/{apiKey}/rotate
-        metadata:
-          title: Rotate API Key (v2)
-          sidebarTitle: Rotate API Key
+      x-mint: "/v2/api-keys/{apiKey}/rotate"
       summary: Rotate API Key
       parameters:
         - name: apiKey
@@ -151,9 +182,30 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: true
+                properties:
+                  message:
+                    type: string
+                  api_key:
+                    $ref: '#/components/schemas/ApiKeyString'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
     User:
       type: object
       required:
@@ -346,6 +398,32 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  responses:
+    UnauthorizedError:
+      description: Unauthorized - Invalid API Key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            unauthorized:
+              $ref: '#/components/examples/unauthorized'
+    ForbiddenError:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            forbidden:
+              $ref: '#/components/examples/forbidden'
+  examples:
+    unauthorized:
+      value:
+        message: Unauthenticated.
+    forbidden:
+      value:
+        message: This action is unauthorized.
 security:
   - ApiKey: [ ]
     BearerAuth: [ ]
