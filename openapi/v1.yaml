@@ -9,10 +9,27 @@ paths:
   /proxy/{proxy}:
     post:
       summary: Proxy request
-      description: Encrypts or decrypts data based on configuration and forwards it if configured.
+      description: Encrypt or decrypt data based on headers.  Allows forwarding to remote destinations.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "123-45-6789",
+              "dob": "1980-01-01",
+              "address": "123 Main St"
+            }
       responses:
         '200':
           $ref: '#/components/responses/ProxyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/InvalidMode'
     parameters:
       - $ref: '#/components/parameters/proxy'
       - $ref: '#/components/parameters/qanapiMode'
@@ -59,6 +76,41 @@ components:
           schema:
             type: object
             additionalProperties: true
+          example: {
+            "name": "John Smith",
+            "email": "john@example.com",
+            "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+            "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+            "address": "123 Main St"
+          }
+    BadRequest:
+      description: Invalid headers
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+          examples:
+            missingApiKey:
+              summary: Missing API key
+              value: {
+                "message": "The X-Qanapi-Authorization header is required."
+              }
+            invalidApiKey:
+              summary: Invalid API key
+              value: {
+                "message": "The X-Qanapi-Authorization token provided is invalid."
+              }
+    InvalidMode:
+      description: Invalid mode
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+          example: {
+            "error": "Invalid mode provided"
+          }
   securitySchemes:
     ApiKey:
       type: apiKey
