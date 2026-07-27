@@ -25,6 +25,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Container'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
     post:
       summary: Create container
       requestBody:
@@ -57,6 +61,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Container'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
   /containers/{container}:
     parameters:
       - name: container
@@ -74,6 +84,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Container'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
     put:
       summary: Update container
       requestBody:
@@ -95,11 +111,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Container'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
     delete:
       summary: Delete container
       responses:
         '204':
           description: Container deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /users:
     get:
       summary: List users
@@ -112,6 +142,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
     post:
       summary: Create user
       requestBody:
@@ -137,6 +171,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
   /users/me:
     get:
       summary: Get current user
@@ -147,6 +187,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
   /users/{user}:
     parameters:
       - name: user
@@ -163,6 +207,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
     patch:
       summary: Update user
       requestBody:
@@ -188,11 +238,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                userDeleted:
+                  value:
+                    message: "User is deleted.  Use restore route before editing the user."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
     delete:
       summary: Delete user
       responses:
         '204':
           description: User deleted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                userDeleted:
+                  value:
+                    message: "User is deleted.  Use restore route before editing the user."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /users/{user}/restore:
     patch:
       summary: Restore user
@@ -209,6 +293,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                userNotDeleted:
+                  value:
+                    message: "A user that has not been deleted cannot be restored."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api-keys:
     get:
       summary: List API Keys
@@ -221,6 +321,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
   /api-keys/{apiKey}:
     get:
       summary: Get API Key
@@ -237,6 +341,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "API key not found"
   /api-keys/{apiKey}/rotate:
     post:
       x-mint:
@@ -262,6 +378,28 @@ paths:
                 properties:
                   key:
                     $ref: '#/components/schemas/ApiKeyString'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                apiKeyRevoked:
+                  value:
+                    message: "API key is revoked"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "API key not found"
   /api-keys/{apiKey}/revoke:
     post:
       x-mint:
@@ -279,6 +417,28 @@ paths:
       responses:
         '204':
           description: API Key revoked
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                apiKeyRevoked:
+                  value:
+                    message: "API key is revoked"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "API key not found"
   /logs/activity:
     get:
       summary: Get activity logs
@@ -291,6 +451,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ActivityLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
   /logs/api:
     get:
       summary: Get API logs
@@ -303,6 +467,10 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ApiLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
   /logs/qanapi-flow:
     get:
       summary: Get Qanapi Flow logs
@@ -315,6 +483,108 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/QanapiFlowLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+  "/encryption/{proxy}/encrypt":
+    post:
+      summary: "Encrypt data"
+      x-mint:
+        href: "/v3/encryption/{proxy}/encrypt"
+        metadata:
+          title: "Encrypt data"
+          sidebarTitle: "Encrypt data"
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "The proxy slug of the encryption container."
+        - name: x-qanapi-fields
+          in: header
+          required: true
+          schema:
+            type: string
+          description: "Comma separated list of fields to encrypt"
+        - name: x-qanapi-destination
+          in: header
+          required: false
+          schema:
+            type: string
+          description: "A URL to forward the encrypted data to.  All non-qanapi headers will be forwarded to the destination."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: "Encrypted data"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  "/encryption/{proxy}/decrypt":
+    post:
+      summary: "Decrypt data"
+      x-mint:
+        href: "/v3/encryption/{proxy}/decrypt"
+        metadata:
+          title: "Decrypt data"
+          sidebarTitle: "Decrypt data"
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "The proxy slug of the encryption container."
+        - name: x-qanapi-fields
+          in: header
+          required: false
+          schema:
+            type: string
+          description: "Comma separated list of fields to decrypt"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: "Decrypted data"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
     User:
@@ -500,6 +770,96 @@ components:
         created_at:
           type: string
           format: date-time
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "An error occurred."
+    ValidationError:
+      type: object
+      required:
+        - message
+        - errors
+      properties:
+        message:
+          type: string
+          example: "Validation failed."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            field_name:
+              - "The field_name field is required."
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            generic:
+              value:
+                message: "Bad request."
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Unauthorized."
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "User does not have the right permissions."
+    ForbiddenAndUnauthorized:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            forbidden:
+              summary: Forbidden
+              value:
+                message: "User does not have the right permissions."
+            unauthorized:
+              summary: Unauthorized
+              value:
+                message: "Unauthorized."
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Resource not found."
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "An unexpected error occurred."
   securitySchemes:
     ApiKey:
       type: apiKey

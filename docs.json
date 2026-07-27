@@ -32,9 +32,7 @@
     "openapi": [
       "openapi/v1.yaml",
       "openapi/v2.yaml",
-      "openapi/v2_encryption.yaml",
-      "openapi/v3.yaml",
-      "openapi/v3_encryption.yaml"
+      "openapi/v3.yaml"
     ]
   },
   "navigation": {
@@ -73,7 +71,7 @@
               },
               {
                 "group": "Encryption",
-                "openapi": "openapi/v3_encryption.yaml",
+                "openapi": "openapi/v3.yaml",
                 "pages": [
                   "POST /encryption/{proxy}/encrypt",
                   "POST /encryption/{proxy}/decrypt"
@@ -129,7 +127,7 @@
               },
               {
                 "group": "Encryption",
-                "openapi": "openapi/v2_encryption.yaml",
+                "openapi": "openapi/v2.yaml",
                 "pages": [
                   "POST /encrypt",
                   "POST /decrypt"

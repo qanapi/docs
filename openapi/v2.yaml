@@ -204,6 +204,69 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /encrypt:
+    post:
+      summary: "Encrypt data"
+      operationId: "postV2Encrypt"
+      x-mint: "/v2/encrypt"
+      responses:
+        '200':
+          description: "Encrypted data"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /decrypt:
+    post:
+      summary: "Decrypt data"
+      operationId: "postV2Decrypt"
+      x-mint: "/v2/decrypt"
+      responses:
+        '200':
+          description: "Decrypted data"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: "Unable to process encrypted data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                cannotDecrypt:
+                  summary: "You are not authorized to decrypt this content"
+                  value:
+                    message: "You are not authorized to decrypt this content"
+                forbidden:
+                  $ref: '#/components/examples/forbidden'
+        '404':
+          description: "Encryption metadata not found"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: "Decryption failed"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Error:
