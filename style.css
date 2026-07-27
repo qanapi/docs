@@ -104,7 +104,7 @@ html.dark {
 .border-standard.rounded-2xl [data-component-part="scroll-area-content"] .font-mono {
     display:         flex !important;
     align-items:     center !important;
-    height:          1.5rem !important;
+    height:          2rem !important; /* Increased from 1.5rem to prevent clipping descenders */
 }
 
 .border-standard.rounded-2xl [data-component-part="scroll-area-content"] .font-mono > div:not(.absolute) {
@@ -130,4 +130,15 @@ h3.sidebar-title {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight:    600 !important;
+}
+
+/* Hide native scrollbar when custom scroll area is used */
+.base-ui-disable-scrollbar {
+    scrollbar-width: none !important;
+}
+
+.base-ui-disable-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width:   0 !important;
+    height:  0 !important;
 }
