@@ -44,7 +44,15 @@
           {
             "group": "Get Started",
             "pages": [
-              "instructions/quickstart"
+              "get-started/introduction",
+              "get-started/quickstart",
+              "get-started/sdks"
+            ]
+          },
+          {
+            "group": "Qanapi Flow",
+            "pages": [
+              "qanapi-flow/smime"
             ]
           }
         ]
