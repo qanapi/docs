@@ -114,7 +114,6 @@ html.dark {
     line-height:     normal !important;
     padding:         0 !important;
     margin:          0 !important;
-    transform:       translateY(0.35rem) !important;
 }
 
 /* Ensure the wrapper doesn't have weird padding pushing it up */
