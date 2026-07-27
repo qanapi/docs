@@ -140,6 +140,8 @@ paths:
       responses:
         '204':
           description: Container deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -455,18 +457,112 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 message: "API key not found"
+  /logs/unified:
+    get:
+      summary: Get unified logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: request_id
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: causer_email
+          in: query
+          schema:
+            type: string
+        - name: details
+          in: query
+          schema:
+            type: string
+        - name: log_type
+          in: query
+          schema:
+            type: string
+            enum: [activity, api, usage]
+        - name: status_code
+          in: query
+          schema:
+            type: integer
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Unified logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UnifiedLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
   /logs/activity:
     get:
       summary: Get activity logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: user
+          in: query
+          description: User ID filter
+          schema:
+            type: integer
+        - name: logName
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: integer
       responses:
         '200':
           description: Activity logs
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ActivityLog'
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ActivityLog'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -474,15 +570,36 @@ paths:
   /logs/api:
     get:
       summary: Get API logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: apiKey
+          in: query
+          description: API Key ID filter
+          schema:
+            type: integer
       responses:
         '200':
           description: API logs
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApiLog'
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ApiLog'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -490,15 +607,36 @@ paths:
   /logs/qanapi-flow:
     get:
       summary: Get Qanapi Flow logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: type
+          in: query
+          description: Integration type filter
+          schema:
+            type: string
       responses:
         '200':
           description: Qanapi Flow logs
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/QanapiFlowLog'
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/QanapiFlowLog'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -537,6 +675,13 @@ paths:
             schema:
               type: object
               additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "123-45-6789",
+              "dob": "1980-01-01",
+              "address": "123 Main St"
+            }
       responses:
         '200':
           description: "Encrypted data"
@@ -545,6 +690,13 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+              example: {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+                "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+                "address": "123 Main St"
+              }
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -583,6 +735,13 @@ paths:
             schema:
               type: object
               additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+              "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+              "address": "123 Main St"
+            }
       responses:
         '200':
           description: "Decrypted data"
@@ -591,6 +750,13 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+              example: {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "ssn": "123-45-6789",
+                "dob": "1980-01-01",
+                "address": "123 Main St"
+              }
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -786,6 +952,93 @@ components:
         created_at:
           type: string
           format: date-time
+    UnifiedLog:
+      type: object
+      properties:
+        log_type:
+          type: string
+          enum: [activity, api, usage]
+        action:
+          type: string
+        description:
+          type: string
+        details:
+          type: object
+          nullable: true
+        causer_email:
+          type: string
+          format: email
+          nullable: true
+        status_code:
+          type: integer
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        container:
+          $ref: '#/components/schemas/Container'
+        user:
+          $ref: '#/components/schemas/User'
+        full_log:
+          oneOf:
+            - $ref: '#/components/schemas/ActivityLog'
+            - $ref: '#/components/schemas/ApiLog'
+            - $ref: '#/components/schemas/QanapiFlowLog'
+    PaginatedResponse:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        data:
+          type: array
+          items:
+            type: object
+        first_page_url:
+          type: string
+          format: uri
+        from:
+          type: integer
+          nullable: true
+        last_page:
+          type: integer
+        last_page_url:
+          type: string
+          format: uri
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                nullable: true
+              label:
+                type: string
+              page:
+                type: integer
+                nullable: true
+              active:
+                type: boolean
+        next_page_url:
+          type: string
+          format: uri
+          nullable: true
+        path:
+          type: string
+        per_page:
+          type: integer
+        prev_page_url:
+          type: string
+          format: uri
+          nullable: true
+        to:
+          type: integer
+          nullable: true
+        total:
+          type: integer
     Error:
       type: object
       required:

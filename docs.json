@@ -68,17 +68,6 @@
             "tag": "latest",
             "groups": [
               {
-                "group": "Containers",
-                "openapi": "openapi/v3.yaml",
-                "pages": [
-                  "GET /containers",
-                  "POST /containers",
-                  "GET /containers/{container}",
-                  "PUT /containers/{container}",
-                  "DELETE /containers/{container}"
-                ]
-              },
-              {
                 "group": "Encryption",
                 "openapi": "openapi/v3.yaml",
                 "pages": [
@@ -107,6 +96,17 @@
                 ]
               },
               {
+                "group": "Containers",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /containers",
+                  "POST /containers",
+                  "GET /containers/{container}",
+                  "PUT /containers/{container}",
+                  "DELETE /containers/{container}"
+                ]
+              },
+              {
                 "group": "API Keys",
                 "openapi": "openapi/v3.yaml",
                 "pages": [
@@ -120,6 +120,7 @@
                 "group": "Logs",
                 "openapi": "openapi/v3.yaml",
                 "pages": [
+                  "GET /logs/unified",
                   "GET /logs/activity",
                   "GET /logs/api",
                   "GET /logs/qanapi-flow"

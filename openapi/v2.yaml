@@ -209,6 +209,20 @@ paths:
       summary: "Encrypt data"
       operationId: "postV2Encrypt"
       x-mint: "/v2/encrypt"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "123-45-6789",
+              "dob": "1980-01-01",
+              "address": "123 Main St"
+            }
       responses:
         '200':
           description: "Encrypted data"
@@ -217,6 +231,13 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+              example: {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+                "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+                "address": "123 Main St"
+              }
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
@@ -226,6 +247,20 @@ paths:
       summary: "Decrypt data"
       operationId: "postV2Decrypt"
       x-mint: "/v2/decrypt"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+              "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+              "address": "123 Main St"
+            }
       responses:
         '200':
           description: "Decrypted data"
@@ -234,6 +269,13 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+              example: {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "ssn": "123-45-6789",
+                "dob": "1980-01-01",
+                "address": "123 Main St"
+              }
         '400':
           description: "Unable to process encrypted data"
           content:
