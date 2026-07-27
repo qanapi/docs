@@ -124,3 +124,11 @@ html.dark {
     align-items: center !important;
     height:      100% !important;
 }
+
+/* Sidebar H3 headers */
+h3.sidebar-title {
+    font-family:    "DM Mono", monospace !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight:    600 !important;
+}

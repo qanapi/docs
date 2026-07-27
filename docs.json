@@ -22,7 +22,8 @@
     }
   },
   "fonts": {
-    "family": "Poppins, sans-serif"
+    "family": "Poppins, sans-serif",
+    "headings": "DM Mono"
   },
   "favicon": "/favicon.ico",
   "api": {
@@ -83,6 +84,13 @@
                 "pages": [
                   "POST /encryption/{proxy}/encrypt",
                   "POST /encryption/{proxy}/decrypt"
+                ]
+              },
+              {
+                "group": "Roles",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /roles"
                 ]
               },
               {
