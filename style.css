@@ -105,17 +105,16 @@ html.dark {
     display:         flex !important;
     align-items:     center !important;
     height:          1.5rem !important;
-    line-height:     1.5rem !important; /* Match height for vertical centering */
 }
 
 .border-standard.rounded-2xl [data-component-part="scroll-area-content"] .font-mono > div:not(.absolute) {
     display:         inline-flex !important;
     align-items:     center !important;
-    height:          1.5rem !important;
-    line-height:     1 !important;
+    height:          100% !important;
+    line-height:     normal !important;
     padding:         0 !important;
     margin:          0 !important;
-    transform:       translateY(0.35rem) !important; /* Increased nudge down based on "moved slightly but not all the way" feedback */
+    transform:       translateY(0.35rem) !important;
 }
 
 /* Ensure the wrapper doesn't have weird padding pushing it up */
