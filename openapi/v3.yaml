@@ -676,6 +676,7 @@ paths:
           application/json:
             schema:
               type: object
+              description: "A JSON object to encrypt fields on.  A maximum depth of 32 is allowed."
               additionalProperties: true
             example: {
               "name": "John Smith",
@@ -736,6 +737,7 @@ paths:
           application/json:
             schema:
               type: object
+              description: "A JSON object to decrypt fields on.  A maximum depth of 32 is allowed."
               additionalProperties: true
             example: {
               "name": "John Smith",
