@@ -1,4 +1,61 @@
 ---
-title: 'Smime'
+title: 'S/MIME'
 description: 'Helpful guides and troubleshooting'
 ---
+
+# Google S/MIME Setup Steps
+1. Enable the [Admin SDK API](https://console.cloud.google.com/marketplace/product/google/admin.googleapis.com)
+    1. Click the "Enable" button and wait for it to finish, where it will redirect you to the SDK API management page.
+    2. If you already see a "Manage" button, this is already enabled
+2. Enable [Gmail SDK API](https://console.cloud.google.com/marketplace/product/google/gmail.googleapis.com)
+    1. Click the "Enable" button and wait for it to finish, where it will redirect you to the SDK API management page.
+    2. If you already see a "Manage" button, this is already enabled
+3. Enable [S/MIME for Gmail](https://admin.google.com/ac/apps/gmail/usersettings)
+    1. Click the section at the bottom for "S/MIME"
+    2. Check "Enable S/MIME encryption for sending and receiving emails"
+    3. Check "Allow users to upload their own certificates"
+    4. Click "Save"
+4. Enable [Client-Side Encryption for Gmail](https://admin.google.com/ac/cse/keyservice) (if using CSE with S/MIME)
+    1. In the "Assignment" section, under "Encryption status by app", click "Edit" for Gmail
+    2. Select "On" and click "Save"
+
+# Ordering Certificates for Users
+1. Select S/MIME (/flow/smime) in the Qanapi App
+2. Click the "Manage" link on the Provider
+3. Select the non-active users you wish to enable by clicking the checkbox next to each one
+4. Click the "Enable" button
+5. Certificates will be ordered for each selected user, and the status will change to "Pending Order"
+6. Once the order has processed in the background, the status will change to "Pending Approval" and the user will receive an email to verify their email address
+7. Users will follow the link in the email and click the "Approve" button
+8. The status will change to "Pending Upload", and the app will attempt to upload the certificate (or CSE Identity) to Gmail. This may take up to 5 minutes
+9. After a successful upload, the status will change to "Active"
+
+<Note>You may view a user's Gmail certificate information by clicking the "Certificate Info" button next to a user on the Qanapi S/MIME management page</Note>
+
+## Cancelling Certificates for Users
+1. Select S/MIME (/flow/smime) in the Qanapi App
+2. Click the "Manage" link on the Provider
+3. Select the active users you wish to disable by clicking the checkbox next to each one
+4. Click the "Disable" button
+5. Users will have their status updated to "Pending Cancellation"
+6. The certificate (or CSE Identity) will be removed from Gmail
+
+# Sending a signed email
+1. In Gmail, open a new draft email by clicking the "Compose" button
+2. Click the lock icon (<Icon icon="lock" color="gray"/>) in the top right of the email
+3. Under "Digital Signature", click the "Sign Message" option
+4. Draft the email and click "Send"
+5. Once sent, the email should have a certificate icon (<Icon icon="award" color="#1A73E8"/>) under the sender's name
+
+# Encrypting emails
+In order to send encrypted emails with another email address, both senders must first send signed emails in order to exchange public certificates.
+1. In Gmail, draft and send a signed email to the desired recipient
+2. The recipient must do the same, replying to the first email with their own signed email
+3. Begin a reply to this email, and click the lock icon (<Icon icon="lock" color="gray"/>) in the top right of the email
+4. Under the "Additional encryption" section, click the "Turn on" link. A verification dialog may open warning about the loss of any existing body to the email
+5. Draft the email and click "Send". This may take a few seconds as Gmail encrypts the email
+6. Once sent, the email should have a green lock icon (<Icon icon="lock"/>) or blue shield icon (<Icon icon="shield" color="#1A73E8"/>) under the sender's name
+
+All future replies to this email chain will now be encrypted with the recipient
+
+<Note>A green lock icon denotes Hosted S/MIME, where Gmail uses certificates uploaded from Qanapi.<br/>A blue shield icon denotes CSE-wrapped S/MIME, where Gmail uses Qanapi's Client-Side Encryption</Note>
