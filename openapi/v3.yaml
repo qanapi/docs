@@ -655,7 +655,7 @@ paths:
           required: true
           schema:
             type: string
-          description: "The proxy slug of the encryption container."
+          description: "The proxy slug of the encryption container.  Get this from your Encryption Containers and the proxy_slug value."
         - name: x-qanapi-fields
           in: header
           required: true

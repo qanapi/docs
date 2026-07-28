@@ -41,7 +41,9 @@ To interact with the Qanapi API, you'll need an API key:
 2. Click "Create New Key"
 3. Select the user, the configs to use and the permissions it can use.
 4. Click "Create Key"
-5. Copy the key that is displayed.
+5. Copy the key that is displayed.  This should be used as your X-Qanapi-Authorization header.
+6. Go to one of the Encryption containers the key is assigned to and copy the proxy string.
+    1. This is used in the encrypt and decrypt routes to tell the API what settings to use.
 
 <Warning>
     Your API key will only be displayed once. Make sure to store it securely as it cannot be retrieved later.
