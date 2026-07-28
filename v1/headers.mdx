@@ -3,40 +3,43 @@ title: Custom Headers
 description: "Unique headers used in API v1 to control authentication, data selection, and request routing."
 ---
 
-API v1 uses custom HTTP headers to provide metadata for encryption, decryption, and authentication for legacy proxy requests.
+API v1 uses custom HTTP headers to provide metadata for encryption, decryption, and authentication for legacy proxy
+requests.
 
 # Authentication Header
 
 <ParamField header="X-Qanapi-Authorization" type="string" required>
-  Your unique API key used for authentication.
+    Your unique API key used for authentication.
 </ParamField>
 
 # Content Control
 
 <ParamField header="X-Qanapi-Mode" type="string" required>
-  Specifies the action to perform on the payload.
-  
-  **Allowed values:** `encrypt`, `decrypt`
+    Specifies the action to perform on the payload.
+
+    **Allowed values:** `encrypt`, `decrypt`
 </ParamField>
 
 <ParamField header="X-Qanapi-Fields" type="string" required>
-  A comma-separated list of field names in the JSON payload to be processed.
+    A comma-separated list of field names in the JSON payload to be processed.
 </ParamField>
 
 <ParamField header="Content-Type" type="string" required>
-  Must be set to `application/json` for all requests containing a JSON payload.
+    Must be set to `application/json` for all requests containing a JSON payload.
 </ParamField>
 
 # Advanced Routing
 
 <ParamField header="X-Qanapi-Destination" type="string">
-  A URL to forward the encrypted data to. If provided, the processed payload will be sent to this destination instead of being returned to the client.
+    A URL to forward the encrypted data to. If provided, the processed payload will be sent to this destination instead
+    of being returned to the client.
 </ParamField>
 
 <Warning>
-  When using `X-Qanapi-Destination`, all non-Qanapi headers will be forwarded to the destination URL along with the processed payload.
+    When using `X-Qanapi-Destination`, all non-Qanapi headers will be forwarded to the destination URL along with the
+    processed payload.
 </Warning>
 
 <Card title="Try it out" icon="vial" href="/v1/overview">
-  Learn more about legacy v1 proxy requests in the overview.
+    Learn more about legacy v1 proxy requests in the overview.
 </Card>

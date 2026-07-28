@@ -5,11 +5,13 @@ description: 'Understanding Qanapi Smart Data Proxies for secure data encryption
 
 # Smart Data Proxies
 
-The Qanapi Smart Data Proxy provides a powerful HTTP endpoint that allows you to seamlessly encrypt, classify, and protect data within any HTTP request, ensuring that sensitive data is never exposed to the destination.
+The Qanapi Smart Data Proxy provides a powerful HTTP endpoint that allows you to seamlessly encrypt, classify, and
+protect data within any HTTP request, ensuring that sensitive data is never exposed to the destination.
 
 ## What is a Smart Data Proxy?
 
-A Smart Data Proxy acts as an intermediary between your application and external services, automatically encrypting sensitive data before it leaves your control. This approach:
+A Smart Data Proxy acts as an intermediary between your application and external services, automatically encrypting
+sensitive data before it leaves your control. This approach:
 
 - **Protects sensitive fields** while allowing non-sensitive data to pass through normally
 - **Preserves data structure** in JSON payloads
@@ -21,13 +23,9 @@ A Smart Data Proxy acts as an intermediary between your application and external
 
 Each project in Qanapi has its own dedicated Smart Data Proxy endpoint. To find your proxy endpoint:
 
-1. Navigate to your project in the Qanapi dashboard
-2. Click on the **Data Proxies** tab
-3. The page will display your proxy details, including:
-- The environment (e.g., Development)
-- The specific URL for your data proxy (e.g., `https://your-tenant.qanapi.cloud/proxy/your-project-id`)
-
-![Data Proxy Page](/images/data-proxy-page.png)
+1. Navigate to your encryption configurations in the Qanapi dashboard
+2. Each configuration will have a copyable proxy field.
+3. The specific URL for your data proxy (e.g., `https://your-tenant.qanapi.cloud/proxy/your-proxy-slug`)
 
 ## Key Features
 
@@ -35,11 +33,13 @@ The Smart Data Proxy offers several powerful features:
 
 ### Selective Field Encryption
 
-Choose which fields in your JSON payload require encryption, allowing you to protect only the sensitive data while leaving non-sensitive data in the clear.
+Choose which fields in your JSON payload require encryption, allowing you to protect only the sensitive data while
+leaving non-sensitive data in the clear.
 
 ### Request Forwarding
 
-Optionally forward the modified request (with encrypted data) to another service, allowing for seamless integration with existing workflows.
+Optionally, forward the modified request (with encrypted data) to another service, allowing for seamless integration
+with existing workflows.
 
 ### Transparent Decryption
 
