@@ -1,13 +1,65 @@
 ---
 title: Custom Headers
-description: "Unique headers used in API v3"
+description: "Unique headers used in API v3 to control authentication, data selection, and request routing."
 ---
 
-## Headers
+# Authentication Header
 
-| Header | Required | Area | Description |
-|--------|----------|------|-------------|
-| `X-Qanapi-Authorization` | Yes | All             | Your API key |
-| `Content-Type`           | Yes | All             | Set to `application/json` for JSON payloads |
-| `X-Qanapi-Fields`        | Yes | Encrypt/Decrypt | Comma-separated list of fields in the JSON payload to be encrypted or decrypted.  You can use dot notation to handle multi-dimensional objects. |
-| `X-Qanapi-Destination`   | No  | Encrypt/Decrypt | A URL to forward the request to after processing instead of returning the encrypted data to the user |
+<ParamField header="X-Qanapi-Authorization" type="string" required>
+    Your unique API key. All v3 API keys are prefixed with `qapi_`.
+</ParamField>
+
+<Tip>
+    You can manage and rotate your API keys in the [API Keys section](/api-reference/list-api-keys).
+</Tip>
+
+# Content Control
+
+<ParamField header="Content-Type" type="string" required>
+    Must be set to `application/json` for all requests containing a JSON payload.
+</ParamField>
+
+<ParamField header="X-Qanapi-Fields" type="string">
+    A comma-separated list of fields in the JSON payload to be processed (encrypted or decrypted).
+
+    <Info>
+        This header is **required** for encryption and decryption requests. For other API calls, it can be omitted.
+    </Info>
+
+    **Dot Notation:** You can use dot notation to target nested fields within multi-dimensional objects.
+</ParamField>
+
+## Dot Notation Example
+
+When working with nested JSON structures, use the `X-Qanapi-Fields` header to specify exactly which fields should be touched.
+
+```bash Request
+curl -X POST https://{subdomain}.qanapi.cloud/api/v3/encryption/{proxy}/encrypt \
+  -H "X-Qanapi-Authorization: qapi_..." \
+  -H "X-Qanapi-Fields: user.email, user.address.zip" \
+  -d '{
+    "user": {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "address": {
+        "city": "New York",
+        "zip": "10001"
+      }
+    }
+  }'
+```
+
+# Advanced Routing
+
+<ParamField header="X-Qanapi-Destination" type="string">
+    A URL to forward the request to after processing. If provided, Qanapi will act as a transparent proxy.
+</ParamField>
+
+<Warning>
+    When using `X-Qanapi-Destination`, all non-Qanapi headers (e.g., `Authorization`, `Custom-App-Header`) will be
+    forwarded to the destination URL along with the processed payload.
+</Warning>
+
+<Card title="Try it out" icon="vial" href="/v3/encryption/{proxy}/encrypt">
+    See these headers in action by testing the Encryption endpoints.
+</Card>
