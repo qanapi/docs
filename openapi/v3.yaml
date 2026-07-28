@@ -655,19 +655,21 @@ paths:
           required: true
           schema:
             type: string
-          description: "The proxy slug of the encryption container.  Get this from your Encryption Containers and the proxy_slug value."
+          description: "The proxy slug of the encryption container.  Get this from your Encryption Containers and the 
+          proxy_slug value."
         - name: x-qanapi-fields
           in: header
           required: true
           schema:
             type: string
-          description: "Comma separated list of fields to encrypt"
+          description: "Comma separated list of fields to encrypt.  You can use dot notation to access nested fields."
         - name: x-qanapi-destination
           in: header
           required: false
           schema:
             type: string
-          description: "A URL to forward the encrypted data to.  All non-qanapi headers will be forwarded to the destination."
+          description: "A URL to forward the encrypted data to.  All non-qanapi headers will be forwarded to the 
+          destination."
       requestBody:
         required: true
         content:
@@ -727,7 +729,7 @@ paths:
           required: false
           schema:
             type: string
-          description: "Comma separated list of fields to decrypt"
+          description: "Comma separated list of fields to decrypt.  You can use dot notation to access nested fields."
       requestBody:
         required: true
         content:
