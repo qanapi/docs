@@ -68,6 +68,12 @@
             "tag": "latest",
             "groups": [
               {
+                "group": "Details",
+                "pages": [
+                  "v3/headers"
+                ]
+              },
+              {
                 "group": "Encryption",
                 "openapi": "openapi/v3.yaml",
                 "pages": [
@@ -132,6 +138,12 @@
             "version": "2.x",
             "groups": [
               {
+                "group": "Details",
+                "pages": [
+                  "v2/headers"
+                ]
+              },
+              {
                 "group": "Authentication",
                 "openapi": "openapi/v2.yaml",
                 "pages": [
@@ -163,6 +175,12 @@
           {
             "version": "1.x",
             "groups": [
+              {
+                "group": "Details",
+                "pages": [
+                  "v1/overview"
+                ]
+              },
               {
                 "group": "Proxy",
                 "openapi": "openapi/v1.yaml",

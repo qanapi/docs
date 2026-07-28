@@ -86,6 +86,16 @@ html.dark {
     }
 }
 
+/* Make content area full width */
+#content-area {
+    max-width: none !important;
+}
+
+/* Adjust the parent container to allow full width and center content if needed */
+#content-container > div {
+    max-width: none !important;
+}
+
 /* Specific fix for playground API route vertical alignment */
 .border-standard.rounded-2xl .method-pill {
     display:         inline-flex !important;
@@ -140,4 +150,8 @@ h3.sidebar-title {
     display: none !important;
     width:   0 !important;
     height:  0 !important;
+}
+
+td > code {
+    white-space: nowrap;
 }

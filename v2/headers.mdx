@@ -1,0 +1,14 @@
+---
+title: Custom Headers
+description: "Unique headers used in API v2"
+---
+
+## Headers
+
+| Header | Required | Area | Description |
+|--------|----------|------|-------------|
+| `X-Qanapi-Authorization` | Yes | All             | Your API key |
+| `Authorization: Bearer`  | Yes | All but `Login` | Used to authenticate the active user during the API calls. |
+| `Content-Type`           | Yes | All             | Set to `application/json` for JSON payloads |
+| `X-Qanapi-Fields`        | Yes | Encrypt/Decrypt | Comma-separated list of fields in the JSON payload to be encrypted or decrypted.  You can use dot notation to handle multi-dimensional objects. |
+| `X-Qanapi-Destination`   | No  | Encrypt         | A URL to forward the request to after encryption instead of returning the encrypted data to the client |
