@@ -70,6 +70,7 @@
               {
                 "group": "Details",
                 "pages": [
+                  "v3/overview",
                   "v3/headers"
                 ]
               },
@@ -178,7 +179,8 @@
               {
                 "group": "Details",
                 "pages": [
-                  "v1/overview"
+                  "v1/overview",
+                  "v1/headers"
                 ]
               },
               {

@@ -1,0 +1,23 @@
+---
+title: Custom Headers
+description: "Unique headers used in API v1"
+---
+
+## Understanding the Headers
+
+For proxy requests, you need to include these headers:
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `X-Qanapi-Authorization` | `your_api_key` | Your API key for authentication |
+| `X-Qanapi-Mode` | `encrypt` | Specifies that you want to encrypt data |
+| `X-Qanapi-Fields` | `title,body` | Comma-separated list of field names to encrypt |
+| `Content-Type` | `application/json` | Specifies that the payload is JSON |
+
+## Optional Headers for Encryption
+
+You can also include these optional headers:
+
+| Header | Example Value | Description |
+|--------|---------------|-------------|
+| `X-Qanapi-Destination` | `https://example.com/api` | Forwards the encrypted data to this URL |

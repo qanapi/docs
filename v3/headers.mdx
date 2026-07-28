@@ -10,4 +10,4 @@ description: "Unique headers used in API v3"
 | `X-Qanapi-Authorization` | Yes | All             | Your API key |
 | `Content-Type`           | Yes | All             | Set to `application/json` for JSON payloads |
 | `X-Qanapi-Fields`        | Yes | Encrypt/Decrypt | Comma-separated list of fields in the JSON payload to be encrypted or decrypted.  You can use dot notation to handle multi-dimensional objects. |
-| `X-Qanapi-Destination`   | No  | Encrypt         | A URL to forward the request to after encryption instead of returning the encrypted data to the client |
+| `X-Qanapi-Destination`   | No  | Encrypt/Decrypt | A URL to forward the request to after processing instead of returning the encrypted data to the user |
