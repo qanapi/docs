@@ -8,48 +8,43 @@ description: 'Get started with Qanapi in just a few minutes'
 This guide will help you get up and running with Qanapi quickly. Follow these steps to start protecting your sensitive
 data with Qanapi's advanced encryption services.
 
-## Step 1: Create an Account
+<Steps>
+    <Step title="Create an Account">
+        1. Visit [qanapi.cloud](https://qanapi.cloud) and click "Sign up"
+        2. Fill out the registration form with your information
+        3. Verify your email address
+        4. Log in to your new Qanapi tenant dashboard
 
-The first step is to create a Qanapi account:
+        <Info>
+            By creating an account, you acknowledge that the system is subject to U.S. government information regulations. Be
+            sure to review the legal notice at the bottom of the registration page.
+        </Info>
+    </Step>
+    <Step title="Create Your First Configuration">
+        Once logged in, you'll need to create an Encryption Configuration:
 
-1. Visit [qanapi.cloud](https://qanapi.cloud) and click "Sign up"
-2. Fill out the registration form with your information
-3. Verify your email address
-4. Log in to your new Qanapi tenant dashboard
+        1. Go to the "Configurations" > "Encryptions"
+        2. Click "Add Encryption"
+            1. Name it whatever you prefer and select your algorithm of choice
+            2. Click "Create Config"
+        3. That's it.  With that API Key you can begin using the API routes.
+    </Step>
+    <Step title="Create an API Key">
+        To interact with the Qanapi API, you'll need an API key:
 
-<Info>
-    By creating an account, you acknowledge that the system is subject to U.S. government information regulations. Be
-    sure to review the legal notice at the bottom of the registration page.
-</Info>
+        1. Go to "Karst_Gorge" > "API Keys"
+        2. Click "Create New Key"
+        3. Select the user, the configs to use and the permissions it can use.
+        4. Click "Create Key"
+        5. Copy the key that is displayed.  This should be used as your X-Qanapi-Authorization header.
+        6. Go to one of the Encryption containers the key is assigned to and copy the proxy string.
+            1. This is used in the encrypt and decrypt routes to tell the API what settings to use.
 
-## Step 2: Create Your First Configuration
-
-Once logged in, you'll need to create an Encryption Configuration:
-
-1. Once logged into your account:
-2. Go to the "Configurations" > "Encryptions"
-3. Click "Add Encryption"
-    1. Name it whatever you prefer and select your algorithm of choice
-    2. Click "Create Config"
-4. That's it.  With that API Key you can begin using the API routes.
-
-## Step 3: Create an API Key
-
-To interact with the Qanapi API, you'll need an API key:
-
-1. Go to "Karst_Gorge" > "API Keys"
-2. Click "Create New Key"
-3. Select the user, the configs to use and the permissions it can use.
-4. Click "Create Key"
-5. Copy the key that is displayed.  This should be used as your X-Qanapi-Authorization header.
-6. Go to one of the Encryption containers the key is assigned to and copy the proxy string.
-    1. This is used in the encrypt and decrypt routes to tell the API what settings to use.
-
-<Warning>
-    Your API key will only be displayed once. Make sure to store it securely as it cannot be retrieved later.
-</Warning>
-
-## Step 4: Begin using our API
-
-That's it!  You are now ready to use the Encryption API.  Visit [the API reference](/api-reference/list-containers) to
-learn what routes are available.
+        <Warning>
+            Your API key will only be displayed once. Make sure to store it securely as it cannot be retrieved later.
+        </Warning>
+    </Step>
+    <Step title="Begin using our API">
+        That's it!  You are now ready to use the Encryption API.  Visit [the API reference](/api-reference/list-containers) to learn what routes are available.
+    </Step>
+</Steps>
