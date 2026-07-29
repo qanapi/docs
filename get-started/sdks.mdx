@@ -1,13 +1,49 @@
 ---
-title: 'SDKs'
-description: 'SDKs to make getting started even easier'
+title: "SDKs"
+sidebarTitle: "SDKs"
+description: "Official SDKs and client libraries for integrating Qanapi's post-quantum encryption into your applications."
 ---
+
+## Overview
+
+Qanapi provides official, open-source SDKs across multiple programming languages to streamline integrating post-quantum encryption, key management, and zero-trust data classification into your software architecture.
+
+Key capabilities provided by all official SDKs:
+- **Zero-Trust Authentication:** Automated management of API keys and secure request header signing.
+- **Type Safety & Intellisense:** Full type definitions and auto-completion across all supported frameworks.
+- **Flexible Engine Routing:** Out-of-the-box support for both Qanapi Cloud (Fully Managed) and self-hosted `Karst_Gorge` engine endpoints.
+- **Automatic Resilience:** Native handling of retries, backoff strategies, and connection pooling.
 
 ## Available SDKs
 
-We offer SDKs in a few common languages.  These can be useful in quickly getting started with our API.
+Explore our supported languages and package registries below:
 
-- [Qanapi TypeScript SDK (npm)](https://www.npmjs.com/package/qanapi)
-- [Qanapi Python SDK (PyPI)](https://pypi.org/project/qanapi)
-- [Qanapi Goland SDK (Go packages)](https://pkg.go.dev/github.com/qanapi/qanapi-sdk-golang)
-- [Qanapi Kotlin SDK (Maven)](https://central.sonatype.com/artifact/cloud.qanapi/qanapi-kotlin)
+<CardGroup cols={2}>
+  <Card title="TypeScript / Node.js / Deno / Bun" icon="node" href="https://www.npmjs.com/package/qanapi">
+    Official package for server-side TypeScript or JavaScript Node.js, Deno and Bun applications.
+  </Card>
+  <Card title="Python" icon="python" href="https://pypi.org/project/qanapi/">
+    Python package for backend services, data pipelines, and AI/LLM security workflows.
+  </Card>
+  <Card title="Go" icon="golang" href="https://pkg.go.dev/github.com/qanapi/qanapi-sdk-golang">
+    High-performance Go module built for microservices, proxies, and cloud infrastructure.
+  </Card>
+  <Card title="Kotlin / Java" icon="java" href="https://central.sonatype.com/artifact/cloud.qanapi/qanapi-kotlin">
+    JVM client library designed for Kotlin and Java applications across Spring Boot, Ktor, and Android.
+  </Card>
+</CardGroup>
+
+
+
+<Tip>
+  Need support for another programming language or framework? Check out our [REST API Reference](/v3/overview) or contact our team at [support@qanapi.com](mailto:support@qanapi.com).
+</Tip>
+
+## Package Registry Quick Reference
+
+| Language | Registry Link | Package Identifier |
+| :--- | :--- | :--- |
+| **TypeScript** | [npm Repository](https://www.npmjs.com/package/qanapi) | `qanapi` |
+| **Python** | [PyPI Index](https://pypi.org/project/qanapi/) | `pypi.org/project/qanapi/` |
+| **Go** | [pkg.go.dev Reference](https://pkg.go.dev/github.com/qanapi/qanapi-sdk-golang) | `github.com/qanapi/qanapi-sdk-golang` |
+| **Kotlin / Java** | [Sonatype Central](https://central.sonatype.com/artifact/cloud.qanapi/qanapi-kotlin) | `cloud.qanapi:qanapi-kotlin` |
