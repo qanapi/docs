@@ -46,7 +46,12 @@
             "group": "Get Started",
             "pages": [
               "get-started/introduction",
-              "get-started/quickstart",
+              "get-started/quickstart"
+            ]
+          },
+          {
+            "group": "Karst_Gorge",
+            "pages": [
               "get-started/sdks"
             ]
           },
