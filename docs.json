@@ -108,14 +108,14 @@
                 ]
               },
               {
-                "group": "Containers",
+                "group": "Configurations",
                 "openapi": "openapi/v3.yaml",
                 "pages": [
-                  "GET /containers",
-                  "POST /containers",
-                  "GET /containers/{container}",
-                  "PUT /containers/{container}",
-                  "DELETE /containers/{container}"
+                  "GET /configurations",
+                  "POST /configurations",
+                  "GET /configurations/{configuration}",
+                  "PUT /configurations/{configuration}",
+                  "DELETE /configurations/{configuration}"
                 ]
               },
               {

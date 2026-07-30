@@ -29,24 +29,24 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/ForbiddenAndUnauthorized'
-  /containers:
+  /configurations:
     get:
-      summary: List containers
+      summary: List configurations
       responses:
         '200':
-          description: List of containers
+          description: List of configurations
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Container'
+                  $ref: '#/components/schemas/Configuration'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/ForbiddenAndUnauthorized'
     post:
-      summary: Create container
+      summary: Create configuration
       requestBody:
         required: true
         content:
@@ -72,34 +72,34 @@ paths:
                 - name
       responses:
         '201':
-          description: Container created
+          description: Configuration created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Container'
+                $ref: '#/components/schemas/Configuration'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/ForbiddenAndUnauthorized'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
-  /containers/{container}:
+  /configurations/{configuration}:
     parameters:
-      - name: container
+      - name: configuration
         in: path
         required: true
         schema:
           type: string
           format: uuid
     get:
-      summary: Get container
+      summary: Get configuration
       responses:
         '200':
-          description: Container details
+          description: Configuration details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Container'
+                $ref: '#/components/schemas/Configuration'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -107,7 +107,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     put:
-      summary: Update container
+      summary: Update configuration
       requestBody:
         required: true
         content:
@@ -122,11 +122,11 @@ paths:
                 - name
       responses:
         '200':
-          description: Container updated
+          description: Configuration updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Container'
+                $ref: '#/components/schemas/Configuration'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -136,10 +136,10 @@ paths:
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
     delete:
-      summary: Delete container
+      summary: Delete configuration
       responses:
         '204':
-          description: Container deleted
+          description: Configuration deleted
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -655,7 +655,7 @@ paths:
           required: true
           schema:
             type: string
-          description: "The proxy slug of the encryption container.  Get this from your Encryption Containers and the 
+          description: "The proxy slug of the encryption configuration.  Get this from your Encryption Configurations and the 
           proxy_slug value."
         - name: x-qanapi-fields
           in: header
@@ -724,7 +724,7 @@ paths:
           required: true
           schema:
             type: string
-          description: "The proxy slug of the encryption container."
+          description: "The proxy slug of the encryption configuration."
         - name: x-qanapi-fields
           in: header
           required: false
@@ -820,7 +820,7 @@ components:
       properties:
         name:
           type: string
-    Container:
+    Configuration:
       type: object
       required:
         - id
@@ -885,7 +885,7 @@ components:
         configurations:
           type: array
           items:
-            $ref: '#/components/schemas/Container'
+            $ref: '#/components/schemas/Configuration'
         permissions:
           type: array
           items:
@@ -982,8 +982,8 @@ components:
         timestamp:
           type: string
           format: date-time
-        container:
-          $ref: '#/components/schemas/Container'
+        configuration:
+          $ref: '#/components/schemas/Configuration'
         user:
           $ref: '#/components/schemas/User'
         full_log:
