@@ -1,0 +1,47 @@
+---
+title: 'Configurations'
+description: 'Learn about configurations and how they manage your add-ons and encryption settings.'
+---
+
+In Qanapi, **Configurations** are the central building blocks for managing your tools and security settings. They act as
+isolated objects that hold specific settings, credentials, and encryption keys.
+
+Understanding the difference between the two types of configurations is crucial for setting up your environment correctly.
+
+## Types of Configurations
+
+There are two primary types of configurations: **Provider Configurations** and **Encryption Configurations**.
+
+<CardGroup>
+    <Card title="Provider Configurations" icon="google">
+        Provider Configurations are used to manage your connection to external services, such as **Qanapi Flow**.
+
+        - **Purpose**: They hold the authentication details (OAuth, Service Accounts) and metadata required to interact with
+        the provider's API.
+        - **Scope**: A provider configuration typically maps to a single organization or workspace within a provider.
+        - **Usage**: Use these to manage who has access to certain features and to monitor the usage of specific provider-linked
+        services.
+        - **Add-Ons**: All your active add-ons (e.g., Client-Side Encryption, Email Classification, Live Redaction) are linked
+        to a Provider Configuration.
+    </Card>
+    <Card title="Encryption Configurations" icon="key" iconType="solid">
+        Encryption Configurations are dedicated to managing the security and cryptographic aspects of your data.
+
+        - **Purpose**: They store Master Encryption Keys (MEK), algorithms, and versioning information used for data protection.
+        - **Scope**: These are decoupled from provider authentication, allowing you to use the same encryption standard across
+        different providers or multiple configurations for different security levels.
+        - **Usage**: When you enable an add-on that requires encryption (like Client-Side Encryption), you will assign it
+        to an Encryption Configuration.
+        - **Isolation**: By separating encryption from the provider configuration, we ensure that your cryptographic keys are
+        managed independently of your service credentials.
+    </Card>
+</CardGroup>
+
+## Key Differences
+
+| Feature | Provider Configuration | Encryption Configuration |
+| :--- | :--- | :--- |
+| **Primary Focus** | API Connectivity & Authentication | Data Security & Cryptography |
+| **Typical Data** | OAuth tokens, Service Account JSON, Admin emails | Encryption keys (MEK), Algorithms (AES), Proxy Slugs |
+| **Add-On Link** | Owns the activation keys for services | Assigned to specific activation keys for security |
+| **Customizability** | Focused on provider-specific settings | Focused on security standards and key rotation |
