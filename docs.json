@@ -89,6 +89,20 @@
                 ]
               },
               {
+                "group": "Key Management Service",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /kms",
+                  "POST /kms/create/{proxy}",
+                  "GET /kms/{key}",
+                  "PATCH /kms/{key}",
+                  "POST /kms/import/{proxy}",
+                  "POST /kms/{key}/export",
+                  "PATCH /kms/{key}/revoke",
+                  "PATCH /kms/{key}/restore"
+                ]
+              },
+              {
                 "group": "Roles",
                 "openapi": "openapi/v3.yaml",
                 "pages": [

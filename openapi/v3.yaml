@@ -650,13 +650,7 @@ paths:
           title: "Encrypt data"
           sidebarTitle: "Encrypt data"
       parameters:
-        - name: proxy
-          in: path
-          required: true
-          schema:
-            type: string
-          description: "The proxy slug of the encryption configuration.  Get this from your Encryption Configurations and the 
-          proxy_slug value."
+        - $ref: '#/components/parameters/Proxy'
         - name: x-qanapi-fields
           in: header
           required: true
@@ -719,12 +713,7 @@ paths:
           title: "Decrypt data"
           sidebarTitle: "Decrypt data"
       parameters:
-        - name: proxy
-          in: path
-          required: true
-          schema:
-            type: string
-          description: "The proxy slug of the encryption configuration."
+        - $ref: '#/components/parameters/Proxy'
         - name: x-qanapi-fields
           in: header
           required: false
@@ -771,6 +760,222 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /kms:
+    get:
+      tags: [ KMS ]
+      summary: List keys
+      operationId: kms_listKeys
+      responses:
+        '200':
+          description: List of keys accessible to the calling API key (may be empty)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KmsKeyBrief'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /kms/{key}:
+    parameters:
+      - $ref: '#/components/parameters/KeyId'
+    get:
+      tags: [ KMS ]
+      summary: Get key
+      operationId: kms_getKey
+      responses:
+        '200':
+          description: Key found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+        '404':
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    patch:
+      tags: [ KMS ]
+      summary: Update key
+      operationId: kms_updateKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KmsKeyUpdateInput'
+      responses:
+        '200':
+          description: Updated key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '404':
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /kms/{key}/export:
+    parameters:
+      - $ref: '#/components/parameters/KeyId'
+    post:
+      tags: [ KMS ]
+      summary: Export private key material
+      operationId: kms_exportKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyExportInput'
+      responses:
+        '200':
+          description: Exported JWE payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KmsKeyExport'
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '404':
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /kms/{key}/revoke:
+    parameters:
+      - $ref: '#/components/parameters/KeyId'
+    patch:
+      tags: [ KMS ]
+      summary: Revoke key
+      operationId: kms_revokeKey
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyRevokeInput'
+      responses:
+        '200':
+          description: Revoked key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+        '404':
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /kms/{key}/restore:
+    parameters:
+      - $ref: '#/components/parameters/KeyId'
+    patch:
+      tags: [ KMS ]
+      summary: Restore key
+      operationId: kms_restoreKey
+      responses:
+        '200':
+          description: Restored key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+        '404':
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /kms/create/{proxy}:
+    parameters:
+      - $ref: '#/components/parameters/Proxy'
+    post:
+      tags: [ KMS ]
+      summary: Create key
+      operationId: kms_createKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KmsKeyCreateInput'
+      responses:
+        '201':
+          description: Key created. If `export_on_create` is true, contains `private_key_material.jwe`.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/KmsKey'
+                  - allOf:
+                      - $ref: '#/components/schemas/KmsKey'
+                      - type: object
+                        properties:
+                          private_key_material:
+                            $ref: '#/components/schemas/PrivateKeyMaterial'
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /kms/import/{proxy}:
+    parameters:
+      - $ref: '#/components/parameters/Proxy'
+    post:
+      tags: [ KMS ]
+      summary: Import a key
+      description: |
+        Two mutually-exclusive modes:
+        - Public key import: provide `algorithm` and `public_key_pem`
+        - Private key import (JWE): provide `type` and `jwe` (object)
+      operationId: kms_importKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/KmsPublicImportInput'
+                - $ref: '#/components/schemas/KmsPrivateImportInput'
+      responses:
+        '201':
+          description: Key imported (private JWE path)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+        '200':
+          description: Key imported (public PEM path)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
 components:
   schemas:
     User:
@@ -991,6 +1196,181 @@ components:
             - $ref: '#/components/schemas/ActivityLog'
             - $ref: '#/components/schemas/ApiLog'
             - $ref: '#/components/schemas/QanapiFlowLog'
+    KmsKey:
+      type: object
+      properties:
+        key_id: { type: string, example: 'kk_01HX7A3K9X3C8R4VQ2ZK9M1ABC' }
+        name: { type: string, nullable: true, example: 'Checkout RSA' }
+        external_id: { type: string, nullable: true, example: 'ext-123' }
+        type:
+          type: string
+          enum: [AES, RSA]
+        algorithm:
+          type: string
+          nullable: true
+          example: 'RSA-2048'  # or AES-256
+        state:
+          type: string
+          example: 'active'
+        private_material_retrievable: { type: boolean }
+        usage_mask:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify]
+        export_window_expires_at:
+          description: Present only when `private_material_retrievable` is true
+          type: string
+          nullable: true
+          format: date-time
+        export_count:
+          type: integer
+          description: Present only when `private_material_retrievable` is true
+          example: 0
+        public_key_pem:
+          type: string
+          description: Present for RSA keys if available
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [key_id, type, private_material_retrievable, usage_mask, created_at, updated_at]
+    KmsKeyBrief:
+      type: object
+      properties:
+        key_id: { type: string }
+        name: { type: string, nullable: true }
+        external_id: { type: string, nullable: true }
+        type: { type: string, enum: [AES, RSA] }
+        algorithm: { type: string, nullable: true }
+        state: { type: string }
+        private_material_retrievable: { type: boolean }
+        has_private_material: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [key_id, type, private_material_retrievable, has_private_material, created_at, updated_at]
+    PrivateKeyMaterial:
+      type: object
+      description: Encrypted private material. Clients must decrypt locally.
+      properties:
+        jwe:
+          type: object
+          description: JWE JSON Serialization object
+      required: [jwe]
+    KmsKeyExport:
+      type: object
+      properties:
+        key_id: { type: string, nullable: true }
+        algorithm: { type: string, nullable: true }
+        format:
+          type: string
+          example: 'JWE'
+        private_key_material:
+          $ref: '#/components/schemas/PrivateKeyMaterial'
+        exported_at:
+          type: string
+          nullable: true
+          format: date-time
+      required: [format, private_key_material]
+    KmsKeyCreateInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [AES, RSA]
+        key_length:
+          type: integer
+          enum: [128, 192, 256]
+          description: AES only
+        rsa_modulus:
+          type: integer
+          enum: [2048, 4096]
+          description: RSA only
+        usage_mask:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify]
+        private_material_retrievable:
+          type: boolean
+          default: false
+        export_window_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        name: { type: string, nullable: true, maxLength: 255 }
+        external_id: { type: string, nullable: true, maxLength: 255 }
+        export_on_create: { type: boolean, default: false }
+        wrap_with_key_id:
+          type: string
+          description: Required when `export_on_create` is true. Recipient RSA public key ID to wrap with.
+      required: [type]
+    KmsKeyUpdateInput:
+      type: object
+      properties:
+        usage_mask:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify]
+        private_material_retrievable: { type: boolean }
+        export_window_expires_at: { type: string, format: date-time, nullable: true }
+    KeyExportInput:
+      type: object
+      properties:
+        wrap_with_key_id:
+          type: string
+          description: Recipient RSA public key ID to wrap private material into a JWE
+        one_time:
+          type: boolean
+          description: When true, exported material can be used only once
+      required: [wrap_with_key_id]
+    KeyRevokeInput:
+      type: object
+      properties:
+        reason:
+          type: string
+          maxLength: 255
+    KmsPublicImportInput:
+      type: object
+      description: Import an RSA public key (PEM)
+      properties:
+        algorithm:
+          type: string
+          enum: [RSA-2048, RSA-4096]
+        public_key_pem:
+          type: string
+          description: PEM encoded RSA public key
+        usage_mask:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify]
+        name: { type: string, nullable: true, maxLength: 255 }
+        external_id: { type: string, nullable: true, maxLength: 255 }
+      required: [algorithm, public_key_pem]
+    KmsPrivateImportInput:
+      type: object
+      description: Import a private key wrapped in JWE
+      properties:
+        type:
+          type: string
+          enum: [AES, RSA]
+        algorithm: { type: string, nullable: true }
+        jwe:
+          type: object
+          description: JWE JSON Serialization object (as produced by Qanapi)
+        usage_mask:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify]
+        private_material_retrievable: { type: boolean, default: false }
+        name: { type: string, nullable: true, maxLength: 255 }
+        external_id: { type: string, nullable: true, maxLength: 255 }
+      required: [type, jwe]
     PaginatedResponse:
       type: object
       properties:
@@ -1069,6 +1449,21 @@ components:
           example:
             field_name:
               - "The field_name field is required."
+  parameters:
+    KeyId:
+      name: key
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: Stable identifier of the KMS key
+    Proxy:
+      name: proxy
+      in: path
+      required: true
+      schema:
+        type: string
+      description: "The proxy slug of the encryption configuration.  Get this from your Encryption Configurations and the 
+          proxy_slug value."
   responses:
     BadRequest:
       description: Bad Request
@@ -1133,6 +1528,12 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             message: "An unexpected error occurred."
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
   securitySchemes:
     ApiKey:
       type: apiKey
