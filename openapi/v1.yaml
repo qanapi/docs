@@ -43,7 +43,7 @@ components:
       required: true
       schema:
         type: string
-      description: The proxy slug of your encryption container
+      description: The proxy slug of your encryption configuration
     qanapiMode:
       name: x-qanapi-mode
       in: header

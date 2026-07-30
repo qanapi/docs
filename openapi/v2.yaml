@@ -365,7 +365,7 @@ components:
       properties:
         name:
           type: string
-    Container:
+    Configuration:
       type: object
       required:
         - id
@@ -430,7 +430,7 @@ components:
         configurations:
           type: array
           items:
-            $ref: '#/components/schemas/Container'
+            $ref: '#/components/schemas/Configuration'
         permissions:
           type: array
           items:
