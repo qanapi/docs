@@ -1,0 +1,1142 @@
+openapi: 3.0.0
+info:
+  title: Qanapi API v3
+  version: 3.0.0
+  description: Qanapi API version 3
+servers:
+  - url: https://{subdomain}.qanapi.cloud/api/v3
+    description: The Qanapi API server
+    variables: {
+      "subdomain": {
+        "default": "",
+        "description": "Customer-specific subdomain."
+      },
+    }
+paths:
+  /roles:
+    get:
+      summary: List roles
+      responses:
+        '200':
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+  /configurations:
+    get:
+      summary: List configurations
+      responses:
+        '200':
+          description: List of configurations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Configuration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+    post:
+      summary: Create configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - provider
+                    - encryption
+                name:
+                  type: string
+                  maxLength: 255
+                provider:
+                  type: string
+                  enum:
+                    - google
+                  description: Required if type is 'provider'
+              required:
+                - type
+                - name
+      responses:
+        '201':
+          description: Configuration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /configurations/{configuration}:
+    parameters:
+      - name: configuration
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get configuration
+      responses:
+        '200':
+          description: Configuration details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+              required:
+                - name
+      responses:
+        '200':
+          description: Configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      summary: Delete configuration
+      responses:
+        '204':
+          description: Configuration deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /users:
+    get:
+      summary: List users
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+    post:
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  description: Name of the role to assign
+              required:
+                - email
+                - role
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /users/me:
+    get:
+      summary: Get current user
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+  /users/{user}:
+    parameters:
+      - name: user
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get user
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                role:
+                  type: string
+                two_factor_enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                userDeleted:
+                  value:
+                    message: "User is deleted.  Use restore route before editing the user."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      summary: Delete user
+      responses:
+        '204':
+          description: User deleted
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                userDeleted:
+                  value:
+                    message: "User is deleted.  Use restore route before editing the user."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /users/{user}/restore:
+    patch:
+      summary: Restore user
+      parameters:
+        - name: user
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                userNotDeleted:
+                  value:
+                    message: "A user that has not been deleted cannot be restored."
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api-keys:
+    get:
+      summary: List API Keys
+      responses:
+        '200':
+          description: List of API Keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+  /api-keys/{apiKey}:
+    get:
+      summary: Get API Key
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: API Key details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "API key not found"
+  /api-keys/{apiKey}/rotate:
+    post:
+      x-mint:
+        href: /v3/api-keys/{apiKey}/rotate
+        metadata:
+          title: Rotate API Key
+          sidebarTitle: Rotate API Key
+      summary: Rotate API Key
+      operationId: rotateApiKey
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: API Key rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    $ref: '#/components/schemas/ApiKeyString'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                apiKeyRevoked:
+                  value:
+                    message: "API key is revoked"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "API key not found"
+  /api-keys/{apiKey}/revoke:
+    post:
+      x-mint:
+        href: /v3/api-keys/{apiKey}/revoke
+        metadata:
+          title: Revoke API Key
+          sidebarTitle: Revoke API Key
+      summary: Revoke API Key
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: API Key revoked
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                apiKeyRevoked:
+                  value:
+                    message: "API key is revoked"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "API key not found"
+  /logs/unified:
+    get:
+      summary: Get unified logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: request_id
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: description
+          in: query
+          schema:
+            type: string
+        - name: causer_email
+          in: query
+          schema:
+            type: string
+        - name: details
+          in: query
+          schema:
+            type: string
+        - name: log_type
+          in: query
+          schema:
+            type: string
+            enum: [activity, api, usage]
+        - name: status_code
+          in: query
+          schema:
+            type: integer
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Unified logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UnifiedLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+  /logs/activity:
+    get:
+      summary: Get activity logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: user
+          in: query
+          description: User ID filter
+          schema:
+            type: integer
+        - name: logName
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Activity logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ActivityLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+  /logs/api:
+    get:
+      summary: Get API logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: apiKey
+          in: query
+          description: API Key ID filter
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: API logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ApiLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+  /logs/qanapi-flow:
+    get:
+      summary: Get Qanapi Flow logs
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: type
+          in: query
+          description: Integration type filter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Qanapi Flow logs
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/QanapiFlowLog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+  "/encryption/{proxy}/encrypt":
+    post:
+      summary: "Encrypt data"
+      x-mint:
+        href: "/v3/encryption/{proxy}/encrypt"
+        metadata:
+          title: "Encrypt data"
+          sidebarTitle: "Encrypt data"
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "The proxy slug of the encryption configuration.  Get this from your Encryption Configurations and the 
+          proxy_slug value."
+        - name: x-qanapi-fields
+          in: header
+          required: true
+          schema:
+            type: string
+          description: "Comma separated list of fields to encrypt.  You can use dot notation to access nested fields."
+        - name: x-qanapi-destination
+          in: header
+          required: false
+          schema:
+            type: string
+          description: "A URL to forward the encrypted data to.  All non-qanapi headers will be forwarded to the 
+          destination."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "A JSON object to encrypt fields on.  A maximum depth of 32 is allowed."
+              additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "123-45-6789",
+              "dob": "1980-01-01",
+              "address": "123 Main St"
+            }
+      responses:
+        '200':
+          description: "Encrypted data"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example: {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+                "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+                "address": "123 Main St"
+              }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  "/encryption/{proxy}/decrypt":
+    post:
+      summary: "Decrypt data"
+      x-mint:
+        href: "/v3/encryption/{proxy}/decrypt"
+        metadata:
+          title: "Decrypt data"
+          sidebarTitle: "Decrypt data"
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "The proxy slug of the encryption configuration."
+        - name: x-qanapi-fields
+          in: header
+          required: false
+          schema:
+            type: string
+          description: "Comma separated list of fields to decrypt.  You can use dot notation to access nested fields."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "A JSON object to decrypt fields on.  A maximum depth of 32 is allowed."
+              additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+              "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+              "address": "123 Main St"
+            }
+      responses:
+        '200':
+          description: "Decrypted data"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example: {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "ssn": "123-45-6789",
+                "dob": "1980-01-01",
+                "address": "123 Main St"
+              }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        two_factor_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    Role:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    Permission:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Configuration:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Value'
+    Value:
+      type: object
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ApiKeyString:
+      type: string
+      pattern: '^qapi_.*'
+      example: qapi_1234567890abcdef1234567890abcdef
+    ApiKey:
+      type: object
+      required:
+        - id
+        - prefix
+        - status
+      properties:
+        id:
+          type: string
+          example: "1"
+        prefix:
+          type: string
+          example: "qapi_"
+        status:
+          type: string
+          enum:
+            - active
+            - revoked
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        user:
+          $ref: '#/components/schemas/User'
+        configurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Configuration'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    ActivityLog:
+      type: object
+      properties:
+        action:
+          type: string
+        description:
+          type: string
+        ip:
+          type: string
+          nullable: true
+        when:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+    ApiLog:
+      type: object
+      properties:
+        api_key_id:
+          type: integer
+        domain:
+          type: string
+        endpoint:
+          type: string
+        method:
+          type: string
+        status_code:
+          type: integer
+        configuration_id:
+          type: integer
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        proxied:
+          type: boolean
+        proxied_to:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        api_key:
+          $ref: '#/components/schemas/ApiKey'
+    QanapiFlowLog:
+      type: object
+      properties:
+        configuration_id:
+          type: integer
+          nullable: true
+        type:
+          type: string
+        action:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    UnifiedLog:
+      type: object
+      properties:
+        log_type:
+          type: string
+          enum: [activity, api, usage]
+        action:
+          type: string
+        description:
+          type: string
+        details:
+          type: object
+          nullable: true
+        causer_email:
+          type: string
+          format: email
+          nullable: true
+        status_code:
+          type: integer
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        configuration:
+          $ref: '#/components/schemas/Configuration'
+        user:
+          $ref: '#/components/schemas/User'
+        full_log:
+          oneOf:
+            - $ref: '#/components/schemas/ActivityLog'
+            - $ref: '#/components/schemas/ApiLog'
+            - $ref: '#/components/schemas/QanapiFlowLog'
+    PaginatedResponse:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        data:
+          type: array
+          items:
+            type: object
+        first_page_url:
+          type: string
+          format: uri
+        from:
+          type: integer
+          nullable: true
+        last_page:
+          type: integer
+        last_page_url:
+          type: string
+          format: uri
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                nullable: true
+              label:
+                type: string
+              page:
+                type: integer
+                nullable: true
+              active:
+                type: boolean
+        next_page_url:
+          type: string
+          format: uri
+          nullable: true
+        path:
+          type: string
+        per_page:
+          type: integer
+        prev_page_url:
+          type: string
+          format: uri
+          nullable: true
+        to:
+          type: integer
+          nullable: true
+        total:
+          type: integer
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "An error occurred."
+    ValidationError:
+      type: object
+      required:
+        - message
+        - errors
+      properties:
+        message:
+          type: string
+          example: "Validation failed."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            field_name:
+              - "The field_name field is required."
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            generic:
+              value:
+                message: "Bad request."
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Unauthorized."
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "User does not have the right permissions."
+    ForbiddenAndUnauthorized:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            forbidden:
+              summary: Forbidden
+              value:
+                message: "User does not have the right permissions."
+            unauthorized:
+              summary: Unauthorized
+              value:
+                message: "Unauthorized."
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "Resource not found."
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: "An unexpected error occurred."
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-Qanapi-Authorization
+security:
+  - ApiKey: [ ]

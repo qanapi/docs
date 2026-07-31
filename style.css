@@ -1,0 +1,157 @@
+html.light {
+    header#navbar {
+        background-color: #FFFFFF;
+    }
+
+    div.almond-layout {
+        background-color: #FFFFFF;
+        color:            #161D21;
+    }
+
+    div.almond-layout a {
+        color: #161D21;
+    }
+
+    #almond-background-color {
+        background-color: #FFFFFF;
+    }
+
+    /* Match sidebar scrollbar style */
+
+    ::-webkit-scrollbar {
+        width:  6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background:    #e2e8f0; /* Subtle light gray */
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #e2e8f0 transparent;
+    }
+}
+
+html.dark {
+    header#navbar {
+        background-color: #232c32;
+    }
+
+    div.almond-layout {
+        background-color: #232c32;
+        color:            #F5F7F7;
+    }
+
+    div.almond-layout a {
+        color: #F5F7F7;
+    }
+
+    #almond-background-color {
+        background-color: #232c32;
+    }
+
+    /* Match sidebar scrollbar style */
+
+    ::-webkit-scrollbar {
+        width:  6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background:    #3f4a52; /* Subtle dark gray */
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #4b5563;
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #3f4a52 transparent;
+    }
+}
+
+/* Make content area full width */
+#content-area {
+    max-width: none !important;
+}
+
+/* Adjust the parent container to allow full width and center content if needed */
+#content-container > div {
+    max-width: none !important;
+}
+
+/* Specific fix for playground API route vertical alignment */
+.border-standard.rounded-2xl .method-pill {
+    display:         inline-flex !important;
+    align-items:     center !important;
+    justify-content: center !important;
+    line-height:     1 !important;
+    height:          1.5rem !important;
+    margin-top:      0 !important;
+    margin-bottom:   0 !important;
+}
+
+/* 
+   Target the path container specifically. 
+   Using a more aggressive approach to force centering.
+*/
+.border-standard.rounded-2xl [data-component-part="scroll-area-content"] .font-mono {
+    display:         flex !important;
+    align-items:     center !important;
+    height:          2rem !important; /* Increased from 1.5rem to prevent clipping descenders */
+}
+
+.border-standard.rounded-2xl [data-component-part="scroll-area-content"] .font-mono > div:not(.absolute) {
+    display:         inline-flex !important;
+    align-items:     center !important;
+    height:          100% !important;
+    line-height:     normal !important;
+    padding:         0 !important;
+    margin:          0 !important;
+}
+
+/* Ensure the wrapper doesn't have weird padding pushing it up */
+.border-standard.rounded-2xl [data-component-part="scroll-area-viewport"] {
+    display:     flex !important;
+    align-items: center !important;
+    height:      100% !important;
+}
+
+/* Sidebar H3 headers */
+h3.sidebar-title {
+    font-family:    "DM Mono", monospace !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight:    600 !important;
+}
+
+/* Hide native scrollbar when custom scroll area is used */
+.base-ui-disable-scrollbar {
+    scrollbar-width: none !important;
+}
+
+.base-ui-disable-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width:   0 !important;
+    height:  0 !important;
+}
+
+td > code {
+    white-space: nowrap;
+}

@@ -1,0 +1,94 @@
+---
+title: Overview
+description: "The Qanapi API v3 provides a powerful set of HTTP endpoints that allows you to seamlessly encrypt and
+protect data within any HTTP request."
+---
+
+Welcome to the Qanapi API v3. This version introduces enhanced configuration management, unified logging, and streamlined
+encryption workflows to ensure your sensitive data remains protected from end to end.
+
+<CardGroup cols={2}>
+    <Card title="Encryption" icon="lock" href="/v3/encryption/{proxy}/encrypt">
+        Directly encrypt and decrypt JSON fields via high-performance proxy endpoints.
+    </Card>
+    <Card title="Configurations" icon="cogs" href="/api-reference/list-configurations">
+        Manage provider and encryption configurations for your secure data flow.
+    </Card>
+    <Card title="API Keys" icon="key" href="/api-reference/list-api-keys">
+        Create, rotate, and revoke secure access keys for your applications.
+    </Card>
+    <Card title="Unified Logs" icon="list" href="/api-reference/get-unified-logs">
+        Monitor activity, API usage, and Qanapi Flow events in a single view.
+    </Card>
+</CardGroup>
+
+## Authentication
+
+All API requests must be authenticated using an API key passed in the `X-Qanapi-Authorization` header.
+
+<Tip>
+    API keys in v3 are prefixed with `qapi_` for easy identification and security scanning.
+</Tip>
+
+```bash
+curl -H "X-Qanapi-Authorization: qapi_your_api_key_here" \
+     https://your-subdomain.qanapi.cloud/api/v3/users/me
+```
+
+## Base URL
+
+The API v3 is hosted on customer-specific subdomains to ensure isolation and performance.
+
+<CodeGroup>
+    ```bash Base URL
+    https://{subdomain}.qanapi.cloud/api/v3
+    ```
+</CodeGroup>
+
+<Note>
+    You can get your own account for free at [qanapi.cloud](https://qanapi.cloud).
+</Note>
+
+## Core Components
+
+### Configurations
+Configurations are the heart of Qanapi. They define how we interact with your identity provider and which strategy is
+used for encryption.
+
+- **Provider Configurations**: Configure integrations with external services like Google.
+- **Encryption Configurations**: Define the logic for data protection within your requests.
+
+<Tip>
+    You can learn more about configurations in our [Configuration Guide](/get-started/configurations).
+</Tip>
+
+### User Management
+Manage your team's access with granular roles and permissions. API v3 supports:
+- Listing and creating users.
+- Role-based access control.
+- Two-factor authentication (2FA) status tracking.
+- Soft-deletion and restoration of user accounts.
+
+### Observability
+Keep a full audit trail of everything happening in your environment.
+- **Activity Logs**: Track administrative actions taken by users.
+- **API Logs**: Monitor request-level details, including status codes and proxying info.
+- **Qanapi Flow Logs**: Specialized logging for automated data flows.
+
+<Warning>
+    Ensure you monitor your API logs for `403 Forbidden` responses, which may indicate insufficient permissions for the
+    provided API key.
+</Warning>
+
+## Next Steps
+
+Ready to start building? Check out our quickstart guide or dive into the specific endpoint documentation.
+
+<CardGroup cols={2}>
+    <Card title="Quickstart" icon="rocket" href="/get-started/quickstart">
+        Get up and running with v3 in minutes.
+    </Card>
+    <Card title="API Reference" icon="code" href="/v3/encryption/{proxy}/encrypt">
+        Explore the full technical specification for every endpoint.
+    </Card>
+</CardGroup>

@@ -1,129 +1,210 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "almond",
   "name": "Qanapi Docs",
   "colors": {
-    "primary": "#08a046",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#08A046",
+    "light": "#08A046",
+    "dark": "#08A046"
   },
-  "favicon": "/favicon.svg",
+  "background": {
+    "color": {
+      "light": "#F5F7F7",
+      "dark": "#161D21"
+    }
+  },
+  "styling": {
+    "codeblocks": {
+      "theme": {
+        "light": "github-light",
+        "dark": "github-dark"
+      }
+    }
+  },
+  "fonts": {
+    "family": "Poppins, sans-serif",
+    "headings": "DM Mono"
+  },
+  "favicon": "/favicon.ico",
+  "api": {
+    "playground": {
+      "display": "simple"
+    },
+    "openapi": [
+      "openapi/v1.yaml",
+      "openapi/v2.yaml",
+      "openapi/v3.yaml"
+    ]
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Getting Started",
+        "tab": "Documentation",
+        "icon": "book-open",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Get Started",
             "pages": [
-              "introduction",
-              "quickstart"
+              "get-started/introduction",
+              "get-started/quickstart",
+              "get-started/configurations"
             ]
           },
           {
-            "group": "Registration & Setup",
+            "group": "Karst_Gorge",
             "pages": [
-              "getting-started/registration",
-              "getting-started/dashboard-navigation",
-              "getting-started/creating-projects"
+              "karst_gorge/sdks"
+            ]
+          },
+          {
+            "group": "Qanapi Flow",
+            "pages": [
+              "qanapi-flow/smime"
             ]
           }
         ]
       },
       {
-        "tab": "Project Management",
-        "groups": [
+        "tab": "API Reference",
+        "icon": "rectangle-terminal",
+        "versions": [
           {
-            "group": "Project Overview",
-            "pages": [
-              "project-management/overview"
+            "version": "3.x",
+            "default": true,
+            "tag": "latest",
+            "groups": [
+              {
+                "group": "Details",
+                "pages": [
+                  "v3/overview",
+                  "v3/headers"
+                ]
+              },
+              {
+                "group": "Encryption",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "POST /encryption/{proxy}/encrypt",
+                  "POST /encryption/{proxy}/decrypt"
+                ]
+              },
+              {
+                "group": "Roles",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /roles"
+                ]
+              },
+              {
+                "group": "Users",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /users",
+                  "POST /users",
+                  "GET /users/me",
+                  "GET /users/{user}",
+                  "PATCH /users/{user}",
+                  "DELETE /users/{user}",
+                  "PATCH /users/{user}/restore"
+                ]
+              },
+              {
+                "group": "Configurations",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /configurations",
+                  "POST /configurations",
+                  "GET /configurations/{configuration}",
+                  "PUT /configurations/{configuration}",
+                  "DELETE /configurations/{configuration}"
+                ]
+              },
+              {
+                "group": "API Keys",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /api-keys",
+                  "GET /api-keys/{apiKey}",
+                  "POST /api-keys/{apiKey}/rotate",
+                  "POST /api-keys/{apiKey}/revoke"
+                ]
+              },
+              {
+                "group": "Logs",
+                "openapi": "openapi/v3.yaml",
+                "pages": [
+                  "GET /logs/unified",
+                  "GET /logs/activity",
+                  "GET /logs/api",
+                  "GET /logs/qanapi-flow"
+                ]
+              }
             ]
           },
           {
-            "group": "API Keys",
-            "pages": [
-              "project-management/api-keys"
+            "version": "2.x",
+            "groups": [
+              {
+                "group": "Details",
+                "pages": [
+                  "v2/headers"
+                ]
+              },
+              {
+                "group": "Authentication",
+                "openapi": "openapi/v2.yaml",
+                "pages": [
+                  "POST /auth/login",
+                  "POST /auth/refresh",
+                  "POST /auth/revoke",
+                  "POST /auth/logout",
+                  "GET /auth/userdetails"
+                ]
+              },
+              {
+                "group": "Encryption",
+                "openapi": "openapi/v2.yaml",
+                "pages": [
+                  "POST /encrypt",
+                  "POST /decrypt"
+                ]
+              },
+              {
+                "group": "API Keys",
+                "openapi": "openapi/v2.yaml",
+                "pages": [
+                  "PATCH /api-keys/{apiKey}/rotate",
+                  "PATCH /api-keys/{apiKey}/revoke"
+                ]
+              }
             ]
           },
           {
-            "group": "Data Classification",
-            "pages": [
-              "project-management/data-classifications"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API & Data Proxies",
-        "groups": [
-          {
-            "group": "Smart Data Proxies",
-            "pages": [
-              "api-v1/data-proxies/overview",
-              "api-v1/data-proxies/encryption",
-              "api-v1/data-proxies/decryption",
-              "api-v1/data-proxies/forwarding"
-            ]
-          },
-          {
-            "group": "API v1 Usage Examples",
-            "pages": [
-              "api-v1/examples/curl",
-              "api-v1/examples/python",
-              "api-v1/examples/javascript"
-            ]
-          },
-          {
-            "group": "API v2",
-            "pages": [
-              "/api-v2/quick-start",
-              "/api-v2/setup",
-              "/api-v2/auth",
-              "/api-v2/encryption",
-              "/api-v2/decryption",
-              "/api-v2/security",
-              "/api-v2/links"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Administration",
-        "groups": [
-          {
-            "group": "Team Management",
-            "pages": [
-              "administration/team-management"
-            ]
-          },
-          {
-            "group": "Billing",
-            "pages": [
-              "administration/billing"
+            "version": "1.x",
+            "groups": [
+              {
+                "group": "Details",
+                "pages": [
+                  "v1/overview",
+                  "v1/headers"
+                ]
+              },
+              {
+                "group": "Proxy",
+                "openapi": "openapi/v1.yaml",
+                "pages": [
+                  "POST /proxy/{proxy}"
+                ]
+              }
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Website",
-          "href": "https://www.qanapi.com",
-          "icon": "globe"
-        },
-        {
-          "anchor": "Dashboard",
-          "href": "https://qanapi.cloud",
-          "icon": "chart-line"
-        },
-        {
-          "anchor": "GitHub",
-          "href": "https://github.com/qanapi",
-          "icon": "github"
-        }
-      ]
-    }
+    ]
+  },
+  "modeToggle": {
+    "default": "dark",
+    "isHidden": false
   },
   "logo": {
     "light": "/logo/light.svg",

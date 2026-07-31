@@ -1,0 +1,541 @@
+openapi: 3.0.0
+info:
+  title: Qanapi API v2
+  version: 2.0.0
+  description: Qanapi API version 2
+servers:
+  - url: https://{subdomain}.qanapi.cloud/api/v2
+    description: The Qanapi API server
+    variables: {
+      "subdomain": {
+        "default": "",
+        "description": "Customer-specific subdomain."
+      },
+    }
+paths:
+  /auth/login:
+    post:
+      summary: Login
+      security:
+        - ApiKey: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                example:
+                  access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3FhbmFwaS50cmF2aXMucWFuYXBpLmRl"
+                  token_type: "bearer"
+                  expires_in: 3600
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /auth/refresh:
+    post:
+      summary: Refresh token
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                example:
+                  access_token: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3FhbmFwaS50cmF2aXMucWFuYXBpLmRl"
+                  token_type: "bearer"
+                  expires_in: 3600
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: Invalid refresh token
+  /auth/revoke:
+    post:
+      summary: Revoke token
+      responses:
+        '200':
+          description: Token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: Token successfully revoked.
+        '400':
+          description: Failed to revoke token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: Failed to revoke token.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /auth/logout:
+    post:
+      summary: Logout
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                example:
+                  user: "jsmith@gmail.com"
+                  message: "Successfully logged out"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /auth/userdetails:
+    get:
+      summary: Get user details
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /api-keys/{apiKey}/revoke:
+    patch:
+      x-mint: "/v2/api-keys/{apiKey}/revoke"
+      summary: Revoke API Key
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API Key revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  id:
+                    type: string
+                  revoked_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: API key is already revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                example:
+                  message: API key is already revoked.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api-keys/{apiKey}/rotate:
+    patch:
+      x-mint: "/v2/api-keys/{apiKey}/rotate"
+      summary: Rotate API Key
+      parameters:
+        - name: apiKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: API Key rotated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  api_key:
+                    $ref: '#/components/schemas/ApiKeyString'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /encrypt:
+    post:
+      summary: "Encrypt data"
+      operationId: "postV2Encrypt"
+      x-mint: "/v2/encrypt"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "123-45-6789",
+              "dob": "1980-01-01",
+              "address": "123 Main St"
+            }
+      responses:
+        '200':
+          description: "Encrypted data"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example: {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+                "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+                "address": "123 Main St"
+              }
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+  /decrypt:
+    post:
+      summary: "Decrypt data"
+      operationId: "postV2Decrypt"
+      x-mint: "/v2/decrypt"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+            example: {
+              "name": "John Smith",
+              "email": "john@example.com",
+              "ssn": "qanapi:MQ:MDFreWVwc2hkMjE2d2N2dHlyZ3NtbXR0M2M:Un9XLlZVXEhQVK/+MiOAiw:$",
+              "dob": "qanapi:MQ:MDFreWVwc2hkOTUwMTkwejUya3I5eHM4OGI:F9ArUSbZ9qrfjX7zN+Fk/Q:$",
+              "address": "123 Main St"
+            }
+      responses:
+        '200':
+          description: "Decrypted data"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+              example: {
+                "name": "John Smith",
+                "email": "john@example.com",
+                "ssn": "123-45-6789",
+                "dob": "1980-01-01",
+                "address": "123 Main St"
+              }
+        '400':
+          description: "Unable to process encrypted data"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                cannotDecrypt:
+                  summary: "You are not authorized to decrypt this content"
+                  value:
+                    message: "You are not authorized to decrypt this content"
+                forbidden:
+                  $ref: '#/components/examples/forbidden'
+        '404':
+          description: "Encryption metadata not found"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: "Decryption failed"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        two_factor_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    Role:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    Permission:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Configuration:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Value'
+    Value:
+      type: object
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ApiKeyString:
+      type: string
+      pattern: '^qapi_.*'
+      example: qapi_1234567890abcdef1234567890abcdef
+    ApiKey:
+      type: object
+      required:
+        - id
+        - prefix
+        - status
+      properties:
+        id:
+          type: string
+          example: "1"
+        prefix:
+          type: string
+          example: "qapi_"
+        status:
+          type: string
+          enum:
+            - active
+            - revoked
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+        user:
+          $ref: '#/components/schemas/User'
+        configurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Configuration'
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    ActivityLog:
+      type: object
+      properties:
+        action:
+          type: string
+        description:
+          type: string
+        ip:
+          type: string
+          nullable: true
+        when:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+    ApiLog:
+      type: object
+      properties:
+        api_key_id:
+          type: integer
+        domain:
+          type: string
+        endpoint:
+          type: string
+        method:
+          type: string
+        status_code:
+          type: integer
+        configuration_id:
+          type: integer
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        proxied:
+          type: boolean
+        proxied_to:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        api_key:
+          $ref: '#/components/schemas/ApiKey'
+    QanapiFlowLog:
+      type: object
+      properties:
+        configuration_id:
+          type: integer
+          nullable: true
+        type:
+          type: string
+        action:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        request_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-Qanapi-Authorization
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    UnauthorizedError:
+      description: Unauthorized - Invalid API Key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            unauthorized:
+              $ref: '#/components/examples/unauthorized'
+    ForbiddenError:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            forbidden:
+              $ref: '#/components/examples/forbidden'
+  examples:
+    unauthorized:
+      value:
+        message: Unauthenticated.
+    forbidden:
+      value:
+        message: This action is unauthorized.
+security:
+  - ApiKey: [ ]
+    BearerAuth: [ ]

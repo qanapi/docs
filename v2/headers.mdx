@@ -1,0 +1,76 @@
+---
+title: Custom Headers
+description: "Unique headers used in API v2 to control authentication, user sessions, and data processing."
+---
+
+API v2 uses custom HTTP headers to manage authentication, maintain user sessions, and control encryption/decryption
+tasks.
+
+# Authentication Headers
+
+<ParamField header="X-Qanapi-Authorization" type="string" required>
+    Your unique API key. All v2 API keys are typically prefixed with `qapi_`.
+</ParamField>
+
+<Tip>
+    You can manage and rotate your API keys in the [API Keys section](/api-reference/list-api-keys).
+</Tip>
+
+<ParamField header="Authorization" type="string">
+    A Bearer token used to authenticate the active user. Required for all endpoints except `Login`.
+</ParamField>
+
+# Content Control
+
+<ParamField header="Content-Type" type="string" required>
+    Must be set to `application/json` for all requests containing a JSON payload.
+</ParamField>
+
+<ParamField header="X-Qanapi-Fields" type="string">
+    A comma-separated list of fields in the JSON payload to be processed (encrypted or decrypted).
+
+    <Info>
+        This header is **required** for encryption and decryption requests. For other API calls, it can be omitted.
+    </Info>
+
+    **Dot Notation:** You can use dot notation to target nested fields within multi-dimensional objects.
+</ParamField>
+
+## Dot Notation Example
+
+When working with nested JSON structures, use the `X-Qanapi-Fields` header to specify exactly which fields should be
+touched.
+
+```bash Request
+curl -X POST https://{subdomain}.qanapi.cloud/api/v2/encrypt \
+  -H "X-Qanapi-Authorization: qapi_..." \
+  -H "Authorization: Bearer <your_access_token>" \
+  -H "X-Qanapi-Fields: user.email, user.address.zip" \
+  -d '{
+    "user": {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "address": {
+        "city": "New York",
+        "zip": "10001"
+      }
+    }
+  }'
+```
+
+# Advanced Routing
+
+<ParamField header="X-Qanapi-Destination" type="string">
+    A URL to forward the request to after encryption. If provided, the processed payload will be sent to this
+    destination
+    instead of being returned to the client.
+</ParamField>
+
+<Warning>
+    When using `X-Qanapi-Destination`, all non-Qanapi headers (e.g., `Custom-App-Header`) will be forwarded to the
+    destination URL along with the processed payload.
+</Warning>
+
+<Card title="Try it out" icon="vial" href="/v2/encrypt">
+    See these headers in action by testing the Encryption endpoints.
+</Card>
