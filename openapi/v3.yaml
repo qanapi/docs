@@ -727,7 +727,7 @@ paths:
           description: "The proxy slug of the encryption configuration."
         - name: x-qanapi-fields
           in: header
-          required: false
+          required: true
           schema:
             type: string
           description: "Comma separated list of fields to decrypt.  You can use dot notation to access nested fields."
