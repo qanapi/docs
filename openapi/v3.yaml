@@ -1218,6 +1218,14 @@ components:
           items:
             type: string
             enum: [encrypt, decrypt, sign, verify]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        revoke_reason:
+          type: string
         export_window_expires_at:
           description: Present only when `private_material_retrievable` is true
           type: string
@@ -1230,12 +1238,6 @@ components:
         public_key_pem:
           type: string
           description: Present for RSA keys if available
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
       required: [key_id, type, private_material_retrievable, usage_mask, created_at, updated_at]
     KmsKeyBrief:
       type: object

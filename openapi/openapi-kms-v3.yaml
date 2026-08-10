@@ -1,0 +1,681 @@
+openapi: 3.1.0
+info:
+  title: QANAPI KMS API v3
+  description: API for managing Key Management Service (KMS) keys in QANAPI v3.
+  version: 3.0.0
+servers:
+  - url: /api/v3
+    description: API v3 base path
+paths:
+  /kms:
+    get:
+      summary: List KMS Keys
+      description: Retrieve a paginated list of KMS keys accessible to the calling API key.
+      tags:
+        - KMS
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name or external_id.
+        - name: sort
+          in: query
+          schema:
+            type: string
+          description: Column to sort by.
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Sort direction.
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Filter by exact name.
+        - name: external_id
+          in: query
+          schema:
+            type: string
+          description: Filter by exact external_id.
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, revoked]
+          description: Filter by key state.
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination.
+      responses:
+        '200':
+          description: A paginated list of KMS keys.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KmsKeyBriefResource'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /kms/{key_id}:
+    get:
+      summary: Get KMS Key
+      description: Retrieve details of a specific KMS key.
+      tags:
+        - KMS
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the KMS key.
+      responses:
+        '200':
+          description: KMS key details.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KmsKeyResource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update KMS Key
+      description: Update metadata or configuration for a specific KMS key.
+      tags:
+        - KMS
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the KMS key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  nullable: true
+                external_id:
+                  type: string
+                  maxLength: 255
+                  nullable: true
+                usage_mask:
+                  type: array
+                  items:
+                    type: string
+                    enum: [encrypt, decrypt, sign, verify]
+                  nullable: true
+                private_material_retrievable:
+                  type: boolean
+                  nullable: true
+                export_window_expires_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+      responses:
+        '200':
+          description: KMS key updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KmsKeyResource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /kms/{key_id}/export:
+    post:
+      summary: Export KMS Key
+      description: Export the private key material wrapped in a JWE.
+      tags:
+        - KMS
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the KMS key to export.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - wrap_with_key_id
+              properties:
+                wrap_with_key_id:
+                  type: string
+                  description: The UUID of the key to use for wrapping.
+      responses:
+        '200':
+          description: KMS key material exported.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KmsKeyResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /kms/{key_id}/revoke:
+    patch:
+      summary: Revoke KMS Key
+      description: Revoke a KMS key, making it unusable for cryptographic operations.
+      tags:
+        - KMS
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the KMS key.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 255
+                  nullable: true
+      responses:
+        '200':
+          description: KMS key revoked successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KmsKeyResource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /kms/{key_id}/restore:
+    patch:
+      summary: Restore KMS Key
+      description: Restore a revoked KMS key to active state.
+      tags:
+        - KMS
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the KMS key.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 255
+                  nullable: true
+      responses:
+        '200':
+          description: KMS key restored successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KmsKeyResource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /kms/{key_id}/rotate:
+    post:
+      summary: Rotate KMS Key
+      description: Generate a new version of the KMS key.
+      tags:
+        - KMS
+      parameters:
+        - name: key_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the KMS key to rotate.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                export_on_create:
+                  type: boolean
+                  default: false
+                wrap_with_key_id:
+                  type: string
+                  description: Required if export_on_create is true.
+      responses:
+        '200':
+          description: KMS key rotated successfully. Returns the new key.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KmsKeyResource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /kms/create/{proxy}:
+    post:
+      summary: Create KMS Key
+      description: Create a new KMS key.
+      tags:
+        - KMS
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The proxy/container identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  enum: [AES, RSA]
+                key_length:
+                  type: integer
+                  enum: [128, 192, 256]
+                  description: Required for AES keys.
+                rsa_modulus:
+                  type: integer
+                  enum: [2048, 4096]
+                  description: Required for RSA keys.
+                usage_mask:
+                  type: array
+                  items:
+                    type: string
+                    enum: [encrypt, decrypt, sign, verify]
+                private_material_retrievable:
+                  type: boolean
+                  default: false
+                export_window_expires_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                name:
+                  type: string
+                  maxLength: 255
+                external_id:
+                  type: string
+                  maxLength: 255
+                export_on_create:
+                  type: boolean
+                  default: false
+                wrap_with_key_id:
+                  type: string
+                  description: Required if export_on_create is true.
+      responses:
+        '201':
+          description: KMS key created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KmsKeyResource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /kms/import/{proxy}:
+    post:
+      summary: Import KMS Key
+      description: Import an existing KMS key (private or public).
+      tags:
+        - KMS
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The proxy/container identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/ImportPrivateKeyRequest'
+                - $ref: '#/components/schemas/ImportPublicKeyRequest'
+      responses:
+        '200':
+          description: KMS key imported successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/KmsKeyResource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  schemas:
+    KmsKeyBriefResource:
+      type: object
+      properties:
+        key_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+        external_id:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [AES, RSA]
+        algorithm:
+          type: string
+        state:
+          type: string
+          enum: [active, revoked]
+        private_material_retrievable:
+          type: boolean
+        has_private_material:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    KmsKeyResource:
+      type: object
+      properties:
+        key_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+        external_id:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum: [AES, RSA]
+        algorithm:
+          type: string
+        state:
+          type: string
+          enum: [active, revoked]
+        private_material_retrievable:
+          type: boolean
+        usage_mask:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        revoke_reason:
+          type: string
+          nullable: true
+        export_window_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        export_count:
+          type: integer
+        public_key_pem:
+          type: string
+          nullable: true
+          description: Only present for RSA keys if public key is available.
+        private_key_material:
+          type: object
+          properties:
+            jwe:
+              type: string
+          description: Only present when explicitly exported or on create/rotate with export.
+
+    ImportPrivateKeyRequest:
+      type: object
+      required:
+        - type
+        - jwe
+      properties:
+        type:
+          type: string
+          enum: [AES, RSA]
+        algorithm:
+          type: string
+        jwe:
+          type: string
+          description: The wrapped private key material.
+        usage_mask:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify]
+        private_material_retrievable:
+          type: boolean
+        name:
+          type: string
+          maxLength: 255
+        external_id:
+          type: string
+          maxLength: 255
+
+    ImportPublicKeyRequest:
+      type: object
+      required:
+        - public_key_pem
+      properties:
+        public_key_pem:
+          type: string
+          description: The public key in PEM format.
+        usage_mask:
+          type: array
+          items:
+            type: string
+            enum: [encrypt, decrypt, sign, verify]
+        name:
+          type: string
+          maxLength: 255
+        external_id:
+          type: string
+          maxLength: 255
+        export_window_expires_at:
+          type: string
+          format: date-time
+
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+        last:
+          type: string
+        prev:
+          type: string
+          nullable: true
+        next:
+          type: string
+          nullable: true
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        from:
+          type: integer
+          nullable: true
+        last_page:
+          type: integer
+        path:
+          type: string
+        per_page:
+          type: integer
+        to:
+          type: integer
+          nullable: true
+        total:
+          type: integer
+
+  responses:
+    BadRequest:
+      description: Bad request.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Invalid JWE
+    Unauthorized:
+      description: Unauthorized.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthorized.
+    Forbidden:
+      description: Forbidden.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Forbidden.
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Not Found.
+    ValidationError:
+      description: Validation error.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
