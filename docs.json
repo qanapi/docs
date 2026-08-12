@@ -32,8 +32,7 @@
     },
     "openapi": [
       "openapi/v1.yaml",
-      "openapi/v2.yaml",
-      "openapi/v3.yaml"
+      "openapi/openapi.yaml"
     ]
   },
   "navigation": {
@@ -82,61 +81,61 @@
               },
               {
                 "group": "Encryption",
-                "openapi": "openapi/v3.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "POST /encryption/{proxy}/encrypt",
-                  "POST /encryption/{proxy}/decrypt"
+                  "POST /v3/encryption/{proxy}/encrypt",
+                  "POST /v3/encryption/{proxy}/decrypt"
                 ]
               },
               {
                 "group": "Roles",
-                "openapi": "openapi/v3.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "GET /roles"
+                  "GET /v3/roles"
                 ]
               },
               {
                 "group": "Users",
-                "openapi": "openapi/v3.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "GET /users",
-                  "POST /users",
-                  "GET /users/me",
-                  "GET /users/{user}",
-                  "PATCH /users/{user}",
-                  "DELETE /users/{user}",
-                  "PATCH /users/{user}/restore"
+                  "GET /v3/users",
+                  "POST /v3/users",
+                  "GET /v3/users/me",
+                  "GET /v3/users/{user}",
+                  "PATCH /v3/users/{user}",
+                  "DELETE /v3/users/{user}",
+                  "PATCH /v3/users/{user}/restore"
                 ]
               },
               {
                 "group": "Configurations",
-                "openapi": "openapi/v3.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "GET /configurations",
-                  "POST /configurations",
-                  "GET /configurations/{configuration}",
-                  "PUT /configurations/{configuration}",
-                  "DELETE /configurations/{configuration}"
+                  "GET /v3/configurations",
+                  "POST /v3/configurations",
+                  "GET /v3/configurations/{configuration}",
+                  "PUT /v3/configurations/{configuration}",
+                  "DELETE /v3/configurations/{configuration}"
                 ]
               },
               {
                 "group": "API Keys",
-                "openapi": "openapi/v3.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "GET /api-keys",
-                  "GET /api-keys/{apiKey}",
-                  "POST /api-keys/{apiKey}/rotate",
-                  "POST /api-keys/{apiKey}/revoke"
+                  "GET /v3/api-keys",
+                  "GET /v3/api-keys/{apiKey}",
+                  "POST /v3/api-keys/{apiKey}/rotate",
+                  "POST /v3/api-keys/{apiKey}/revoke"
                 ]
               },
               {
                 "group": "Logs",
-                "openapi": "openapi/v3.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "GET /logs/unified",
-                  "GET /logs/activity",
-                  "GET /logs/api",
-                  "GET /logs/qanapi-flow"
+                  "GET /v3/logs/unified",
+                  "GET /v3/logs/activity",
+                  "GET /v3/logs/api",
+                  "GET /v3/logs/qanapi-flow"
                 ]
               }
             ]
@@ -152,29 +151,29 @@
               },
               {
                 "group": "Authentication",
-                "openapi": "openapi/v2.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "POST /auth/login",
-                  "POST /auth/refresh",
-                  "POST /auth/revoke",
-                  "POST /auth/logout",
-                  "GET /auth/userdetails"
+                  "POST /v2/auth/login",
+                  "POST /v2/auth/refresh",
+                  "POST /v2/auth/revoke",
+                  "POST /v2/auth/logout",
+                  "GET /v2/auth/userdetails"
                 ]
               },
               {
                 "group": "Encryption",
-                "openapi": "openapi/v2.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "POST /encrypt",
-                  "POST /decrypt"
+                  "POST /v2/encrypt",
+                  "POST /v2/decrypt"
                 ]
               },
               {
                 "group": "API Keys",
-                "openapi": "openapi/v2.yaml",
+                "openapi": "openapi/openapi.yaml",
                 "pages": [
-                  "PATCH /api-keys/{apiKey}/rotate",
-                  "PATCH /api-keys/{apiKey}/revoke"
+                  "PATCH /v2/api-keys/{apiKey}/rotate",
+                  "PATCH /v2/api-keys/{apiKey}/revoke"
                 ]
               }
             ]
