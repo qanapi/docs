@@ -118,7 +118,7 @@ paths:
           $ref: '#/components/responses/ForbiddenAndUnauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-    put:
+    patch:
       summary: Update configuration
       requestBody:
         required: true
@@ -766,6 +766,146 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
   
+  /v3/classifications:
+    get:
+      summary: List classifications
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: name
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+        - name: user
+          in: query
+          schema:
+            type: integer
+        - name: roles
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: providers
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of classifications
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Classification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+
+    post:
+      summary: Create classification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClassificationRequest'
+      responses:
+        '201':
+          description: Classification created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Classification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /v3/classifications/{classification}:
+    parameters:
+      - name: classification
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get classification
+      responses:
+        '200':
+          description: Classification details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Classification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAndUnauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update classification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClassificationRequest'
+      responses:
+        '200':
+          description: Classification updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Classification'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      summary: Delete classification
+      responses:
+        '204':
+          description: Classification deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
   # ==========================================
   # V2 PATHS
   # ==========================================
@@ -1405,6 +1545,108 @@ components:
             - $ref: '#/components/schemas/ActivityLog'
             - $ref: '#/components/schemas/ApiLog'
             - $ref: '#/components/schemas/QanapiFlowLog'
+    GoogleGroup:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+    Classification:
+      type: object
+      required:
+        - id
+        - name
+        - slug
+        - bg_color
+        - fg_color
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          maxLength: 32
+        slug:
+          type: string
+        description:
+          type: string
+          maxLength: 255
+          nullable: true
+        bg_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        fg_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        emoji:
+          type: string
+          nullable: true
+        providers:
+          type: array
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+                format: uuid
+              name:
+                type: string
+              gws_groups:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GoogleGroup'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    ClassificationRequest:
+      type: object
+      required:
+        - name
+        - bg_color
+        - fg_color
+      properties:
+        name:
+          type: string
+          maxLength: 32
+        description:
+          type: string
+          maxLength: 255
+          nullable: true
+        bg_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        fg_color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        emoji:
+          type: string
+          nullable: true
+        provider_container_id:
+          type: integer
+          description: Required if gws_groups is provided.
+        gws_groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleGroup'
+        users:
+          type: array
+          items:
+            type: integer
+          description: Array of user IDs.
+        roles:
+          type: array
+          items:
+            type: integer
+          description: Array of role IDs.
     PaginatedResponse:
       type: object
       properties:
