@@ -39,7 +39,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/ForbiddenAndUnauthorized'
-          
+
   /v3/configurations:
     get:
       summary: List configurations
@@ -94,7 +94,7 @@ paths:
           $ref: '#/components/responses/ForbiddenAndUnauthorized'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
-          
+
   /v3/configurations/{configuration}:
     parameters:
       - name: configuration
@@ -160,7 +160,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-          
+
   /v3/users:
     get:
       summary: List users
@@ -667,6 +667,7 @@ paths:
             type: string
           description: "The proxy slug of the encryption configuration.  Get this from your Encryption Configurations and the proxy_slug value."
         - $ref: "#/components/parameters/SensitiveFields"
+        - $ref: "#/components/parameters/ClassificationHeader"
         - name: x-qanapi-destination
           in: header
           required: false
@@ -708,11 +709,50 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                forbidden:
+                  summary: Forbidden
+                  value:
+                    message: "User does not have the right permissions."
+                classification_unauthorized:
+                  summary: Classification Unauthorized
+                  value:
+                    message: "Unauthorized."
         '404':
-          $ref: '#/components/responses/NotFound'
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                not_found:
+                  summary: Resource Not Found
+                  value:
+                    message: "Resource not found."
+                classification_not_found:
+                  summary: Classification Not Found
+                  value:
+                    message: "Classification not found by {classificationId}."
         '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                internal_error:
+                  summary: Internal Server Error
+                  value:
+                    message: "An unexpected error occurred."
+                classification_error:
+                  summary: Classification Access Error
+                  value:
+                    message: "Unable to check access to classification."
 
   /v3/encryption/{proxy}/decrypt:
     post:
@@ -758,14 +798,27 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    message: "Unauthorized."
+                no_access_to_classification:
+                  summary: No Access to Classification
+                  value:
+                    message: "You do not have access to this classification. Contact your administrator if you think this is incorrect."
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  
+
   /v3/classifications:
     get:
       summary: List classifications
@@ -905,7 +958,7 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-          
+
   # ==========================================
   # V2 PATHS
   # ==========================================
@@ -1090,7 +1143,7 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
         '403':
           $ref: '#/components/responses/ForbiddenError'
-          
+
   /v2/encrypt:
     post:
       summary: Encrypt data
@@ -1131,7 +1184,7 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
         '403':
           $ref: '#/components/responses/ForbiddenError'
- 
+
   /v2/decrypt:
     post:
       summary: Decrypt data
@@ -1246,7 +1299,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  
+
   /v2/api-keys/{apiKey}/rotate:
     patch:
       summary: Rotate API Key
@@ -1284,10 +1337,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-                    
+
 components:
   securitySchemes:
-  
+
     # ==========================================
     # SHARED SECURITY SCHEMES
     # ==========================================
@@ -1295,7 +1348,7 @@ components:
       type: apiKey
       in: header
       name: x-qanapi-authorization
-      
+
     # ==========================================
     # V2 SECURITY SCHEMES
     # ==========================================
@@ -1306,7 +1359,7 @@ components:
 
 
   parameters:
-  
+
     # ==========================================
     # V3 PARAMETERS
     # ==========================================
@@ -1321,6 +1374,13 @@ components:
             SensitiveFieldsExample:
                 value: "password,sensitive1,sensitive2"
                 summary: A sample sensitive fields list
+    ClassificationHeader:
+      in: header
+      name: x-qanapi-classification
+      required: false
+      description: "The classification ID or slug to assign to the encrypted data."
+      schema:
+        type: string
 
   schemas:
 
@@ -1708,7 +1768,7 @@ components:
           type: string
           example: "An error occurred."
     ValidationError:
-    
+
       type: object
       required:
         - message
@@ -1726,7 +1786,7 @@ components:
           example:
             field_name:
               - "The field_name field is required."
-                          
+
     # ==========================================
     # V2 SCHEMAS
     # ==========================================
@@ -1754,11 +1814,11 @@ components:
             type: string
           description: |
             Laravel-style dot-notated paths to fields that should be encrypted.
-            
+
             Supports:
               - Dot notation for nested fields: `user.profile.ssn`
               - Wildcard `*` for arrays or dynamic keys: `users.*.token`
-            
+
             Examples:
               - `password`
               - `user.credentials.secret`
@@ -1810,7 +1870,7 @@ components:
             - type: object
               additionalProperties: true
             - type: array
-              items: 
+              items:
                 x-stainless-any: true
 
         sensitiveFields:
@@ -1819,7 +1879,7 @@ components:
             type: string
           description: |
             Laravel-style dot-notated paths to fields to decrypt.
-            
+
             - Same syntax and behavior as in V2EncryptRequest.
             - If omitted, all string values matching encryption prefix are attempted.
 
@@ -1828,7 +1888,7 @@ components:
               - `employees.*.payroll.token`
 
   responses:
-  
+
     # ==========================================
     # V3 RESPONSES
     # ==========================================
