@@ -46,7 +46,8 @@
             "pages": [
               "get-started/introduction",
               "get-started/quickstart",
-              "get-started/configurations"
+              "get-started/configurations",
+              "get-started/classifications"
             ]
           },
           {

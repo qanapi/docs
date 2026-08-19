@@ -1,0 +1,60 @@
+---
+title: 'Classifications'
+description: 'Learn about classifications and how they be used to secure your data.'
+---
+
+Classifications are a fundamental component of Qanapi's **Zero Trust** architecture, serving as the policy engine that
+defines granular access controls and data handling rules for your sensitive information.
+
+By tagging data with classifications, you can strictly control who can access it and how it is processed across
+different services, including direct API usage and our Live Redaction integration for Google Docs™.
+
+## Access Control
+
+Classifications act as gatekeepers for your encrypted data. You can manage access at a granular level by assigning:
+
+<CardGroup>
+    <Card title="Users" icon="users">
+        Grant specific application users the ability to encrypt or decrypt data associated with a classification.  Any
+        user in your **Users** area can be added directly to a classification.
+    </Card>
+    <Card title="Roles" icon="key" iconType="solid">
+        Assign roles to a classification to manage access for groups of users within your application.  Any of the 4
+        roles can be directly assigned to classifications.
+    </Card>
+</CardGroup>
+
+This ensures that only authorized entities can perform cryptographic operations on data protected by a specific
+classification through the API.
+
+## Live Redaction Integration
+
+Classifications are essential for **Live Redaction**, enabling secure data masking and encryption based on
+organizational identity.  This is the central mechanis, for allowing users with different access to view the same
+document.
+
+### Provider Configurations & Google Groups
+You can add **Provider Configurations** to a classification and specify **Google Groups**. This integration allows
+Qanapi to verify membership in these groups before granting access to encrypted data, bridging your organizational
+identity with your data security policy.
+
+### Enabling Encryption
+To enable encryption within Live Redaction, you **must** assign any relevant classifications to your provider
+configuration. Without this assignment, Live Redaction will not have the necessary context to perform encryption
+operations.  This is done
+
+## Creating Classifications
+
+You can manage your classifications through two primary methods:
+
+<CardGroup cols={2}>
+    <Card title="Qanapi Dashboard" icon="browser" href="https://qanapi.cloud">
+        Create and manage classifications in the site at the **Classifications** link in the sidebar.
+    </Card>
+    <Card title="Qanapi API" icon="code" href="/api-reference/list-classifications">
+        Programmatically manage classifications using the API.
+
+        See the [Classifications API Reference](/api-reference/list-classifications) for more details.
+    </Card>
+</CardGroup>
+
