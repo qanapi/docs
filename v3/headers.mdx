@@ -50,6 +50,17 @@ curl -X POST https://{subdomain}.qanapi.cloud/api/v3/encryption/{proxy}/encrypt 
   }'
 ```
 
+# Classifications
+
+<ParamField header="X-Qanapi-Classification" type="string">
+    The ID or slug of a classification to assign to the encrypted data.
+</ParamField>
+
+If you use this header with an encryption request, the key(s) it generates will be tagged with that classification.
+This means that if any other user or api key tries to decrypt the data, they MUST have access to the classification.
+If they do not, they will not be able to decrypt the data.  This adds an extra layer of security on the data you encrypt
+through our system.
+
 # Advanced Routing
 
 <ParamField header="X-Qanapi-Destination" type="string">

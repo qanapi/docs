@@ -46,7 +46,8 @@
             "pages": [
               "get-started/introduction",
               "get-started/quickstart",
-              "get-started/configurations"
+              "get-started/configurations",
+              "get-started/classifications"
             ]
           },
           {
@@ -88,6 +89,17 @@
                 ]
               },
               {
+                "group": "Classifications",
+                "openapi": "openapi/openapi.yaml",
+                "pages": [
+                  "GET /v3/classifications",
+                  "GET /v3/classifications/{classification}",
+                  "POST /v3/classifications",
+                  "PATCH /v3/classifications/{classification}",
+                  "DELETE /v3/classifications/{classification}"
+                ]
+              },
+              {
                 "group": "Roles",
                 "openapi": "openapi/openapi.yaml",
                 "pages": [
@@ -114,7 +126,7 @@
                   "GET /v3/configurations",
                   "POST /v3/configurations",
                   "GET /v3/configurations/{configuration}",
-                  "PUT /v3/configurations/{configuration}",
+                  "PATCH /v3/configurations/{configuration}",
                   "DELETE /v3/configurations/{configuration}"
                 ]
               },
