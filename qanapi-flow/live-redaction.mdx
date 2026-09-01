@@ -1,0 +1,43 @@
+---
+title: 'Live Redaction'
+description: 'Helpful guides and details'
+---
+
+# Requirements
+
+In order for Live Redaction to function you need 3 things:
+
+1. A Google Organization
+2. A valid license in https://qanapi.cloud.
+3. At least 1 [classification](/get-started/classifications).
+
+Once you have this, and you have added the add on to your Google account/organization, it will work.
+
+# Converting Versions
+
+There used to be an HTTP Endpoint version of Live Redaction.  This version used Google response cards and hover mechanics
+to handle the encryption and decryption logic.  When we upgraded to the Apps Script version, there needed to be a way to
+convert these older ones to the new version.  The way you do this is pretty simple.
+
+<Steps>
+    <Step title="Copy the original URL">
+        1. Hover over the old style encryption.
+        2. Click the "<Icon icon="copy" color="white"/>" icon.  This will copy the URL to your clipboard.
+
+        ![Copy URL](/images/flow/live-redaction/convert-versions/copy_http_url.png)
+    </Step>
+    <Step title="Paste the URL">
+        Paste the copied URL anywhere in the document that you want it.
+    </Step>
+    <Step title="Convert to the Apps Script version">
+        1. Highlight your URL.
+        2. Click "Detect Version" on the sidebar.
+        3. In the new area at the top you will see 2 options:
+            1. **Encrypt**: This will convert the old URL into a new encryption string.  It will have the same classification
+               color as the original encryption.
+            2. **Decrypt**: This will convert the old URL into a plain text string of the decrypted data.
+
+        ![Highlight Old URL](/images/flow/live-redaction/convert-versions/highlight_old_url.png)
+        ![Convert URL](/images/flow/live-redaction/convert-versions/conversion_section.png)
+    </Step>
+</Steps>
