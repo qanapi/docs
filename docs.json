@@ -59,6 +59,7 @@
           {
             "group": "Qanapi Flow",
             "pages": [
+              "qanapi-flow/purchase",
               "qanapi-flow/smime",
               "qanapi-flow/live-redaction"
             ]
