@@ -155,6 +155,129 @@
             ]
           },
           {
+            "version": "3.x - Stand Alone",
+            "groups": [
+              {
+                "group": "Details",
+                "pages": [
+                  "v3-stand-alone/overview",
+                  "v3-stand-alone/headers"
+                ]
+              },
+              {
+                "group": "Encryption",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "POST /api/v3/encryption/{proxy}/encrypt",
+                  "POST /api/v3/encryption/{proxy}/decrypt"
+                ]
+              },
+              {
+                "group": "Classifications",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /api/v3/classifications",
+                  "GET /api/v3/classifications/{id}",
+                  "POST /api/v3/classifications",
+                  "PATCH /api/v3/classifications/{id}",
+                  "DELETE /api/v3/classifications/{id}"
+                ]
+              },
+              {
+                "group": "Policies",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /api/v3/policies",
+                  "POST /api/v3/policies",
+                  "GET /api/v3/policies/{id}",
+                  "DELETE /api/v3/policies/{id}"
+                ]
+              },
+              {
+                "group": "Authentication",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "POST /api/v3/auth/login",
+                  "POST /api/v3/auth/register"
+                ]
+              },
+              {
+                "group": "Users",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /api/v3/users",
+                  "POST /api/v3/users",
+                  "GET /api/v3/users/me",
+                  "GET /api/v3/users/{id}",
+                  "PATCH /api/v3/users/{id}",
+                  "DELETE /api/v3/users/{id}"
+                ]
+              },
+              {
+                "group": "Configurations",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /api/v3/configurations",
+                  "POST /api/v3/configurations",
+                  "GET /api/v3/configurations/{id}",
+                  "PATCH /api/v3/configurations/{id}",
+                  "DELETE /api/v3/configurations/{id}"
+                ]
+              },
+              {
+                "group": "API Keys",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /api/v3/api-keys",
+                  "GET /api/v3/api-keys/{id}",
+                  "PATCH /api/v3/api-keys/{id}/configurations",
+                  "POST /api/v3/api-keys/{id}/rotate",
+                  "POST /api/v3/api-keys/{id}/revoke"
+                ]
+              },
+              {
+                "group": "Health",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /health/live",
+                  "GET /health/ready"
+                ]
+              },
+              {
+                "group": "KMS",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /api/v3/kms",
+                  "POST /api/v3/kms/create/{proxy}",
+                  "POST /api/v3/kms/import/{proxy}",
+                  "GET /api/v3/kms/{uuid}",
+                  "PATCH /api/v3/kms/{uuid}",
+                  "POST /api/v3/kms/{uuid}/export",
+                  "POST /api/v3/kms/{uuid}/rotate",
+                  "PATCH /api/v3/kms/{uuid}/revoke",
+                  "PATCH /api/v3/kms/{uuid}/restore"
+                ]
+              },
+              {
+                "group": "Audit",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /api/v3/audit-logs",
+                  "POST /api/v3/audit-logs/export",
+                  "GET /api/v3/audit-logs/verify"
+                ]
+              },
+              {
+                "group": "Transport",
+                "openapi": "openapi/stand-alone/v3.yaml",
+                "pages": [
+                  "GET /api/v3/qanapi-public-key",
+                  "POST /api/v3/qanapi-public-key/rotate"
+                ]
+              }
+            ]
+          },
+          {
             "version": "2.x",
             "groups": [
               {

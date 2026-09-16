@@ -1,0 +1,2233 @@
+# Qanapi Standalone Rust API v3 - OpenAPI description.
+#
+# This file describes the surface the service actually serves. It is generated
+# by hand from `src/api/router.rs` and the request and response types in
+# `src/models/`, and is checked against a running instance, so a divergence
+# between this file and the service is a bug in one of them rather than an
+# expected drift.
+#
+# What OpenAPI cannot express well is in docs/api-guide.md: the key hierarchy,
+# the envelope format, how a configuration scopes an API key, how classification
+# clearance resolves, and what the forwarding proxy does to a request. Read that
+# first if you are integrating rather than looking up one endpoint.
+openapi: 3.1.0
+
+info:
+  title: Qanapi Standalone API
+  version: 3.0.0
+  summary: Single-tenant encryption, key management, classification and audit service.
+  description: |
+    A standalone cryptographic service. Callers hand it data and it returns
+    ciphertext, or hand it ciphertext and it returns data, with every operation
+    authorised by policy and recorded on a tamper-evident audit trail.
+
+    ## Authentication
+
+    Two credentials reach the same principal:
+
+    - **API key** in `X-Qanapi-Authorization`, for machine callers. A key reaches
+      only the configurations it is linked to.
+    - **User bearer token** in `Authorization`, from `POST /api/v3/auth/login`,
+      for a person working through a console.
+
+    An API key outranks a bearer token when a request carries both, because a
+    key names a narrower credential than the user that owns it.
+
+    ## Status codes
+
+    The credential failures are worth stating plainly, because they are not what
+    a reader would guess and clients branch on them:
+
+    | Situation | Status |
+    |---|---|
+    | No credential presented at all | `400` |
+    | A credential that does not verify | `401` |
+    | A revoked API key | `403` |
+    | Authenticated but not permitted | `403` |
+    | Request body or parameter is invalid | `422` |
+
+    All of these match the Laravel v3 API this service replaces. Every error body
+    carries `message` and `error`; validation failures additionally carry a
+    field-keyed `errors` object.
+
+    ## Rate limiting
+
+    Every response carries `X-RateLimit-Limit` and `X-RateLimit-Remaining`. The
+    window is per node and keyed on the client address, so a cluster of n nodes
+    admits n times the configured figure.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Qanapi-Commercial
+
+servers:
+- url: https://{host}
+  description: A deployed instance, behind the reverse proxy that terminates TLS.
+  variables:
+    host:
+      default: qanapi.example.com
+- url: http://localhost:8000
+  description: The local Compose cluster, through its load balancer.
+
+security:
+- ApiKeyAuth: []
+- BearerAuth: []
+
+tags:
+- name: STAND
+  description: |
+    Every operation this service serves. Carried on all of them so the
+    standalone surface can be selected as a whole, which matters where this
+    description is rendered or merged alongside another Qanapi API.
+
+    It is a marker rather than a grouping: each operation keeps the tag that
+    says what it does, and that one is listed first.
+- name: Health
+  description: |
+    Liveness and readiness probes. Registered outside the authentication,
+    audit and transport layers, so a load balancer polling them without
+    credentials still gets an answer.
+- name: Authentication
+  description: Logging in, and creating the first administrator.
+- name: Users
+  description: User accounts and their roles.
+- name: API keys
+  description: |
+    Machine credentials. A key is scoped to a set of configurations and reaches
+    nothing until it is linked to at least one.
+- name: Configurations
+  description: |
+    Encryption configurations, called configurations on the wire for compatibility
+    with the v3 API this service replaces. A configuration owns a master key and is
+    the unit of cryptographic isolation.
+- name: Classifications
+  description: |
+    Sensitivity labels and the clearance that reaches them.
+- name: Policies
+  description: Allow and deny rules binding a principal to actions on resources.
+- name: Encryption
+  description: |
+    The data plane. Field-level or whole-body encryption under a configuration,
+    optionally forwarded onward to a destination of the caller's choosing.
+- name: KMS
+  description: Customer-managed key lifecycle, import and export.
+- name: Audit
+  description: The tamper-evident record of everything the service did.
+- name: Transport
+  description: The service's own key pair, for end-to-end encrypted request bodies.
+
+paths:
+
+  # ----------------------------------------------------------------- health
+
+  /health/live:
+    get:
+      tags: [Health, STAND]
+      summary: Liveness probe
+      description: |
+        Touches nothing external, so a database outage cannot make an
+        orchestrator restart otherwise healthy nodes.
+      operationId: healthLive
+      security: []
+      responses:
+        '200':
+          description: The process is running.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, instance_id, version]
+                properties:
+                  status: { type: string, const: ok }
+                  instance_id: { type: string, examples: [node-01] }
+                  version: { type: string, examples: ['3.0.0'] }
+
+  /health/ready:
+    get:
+      tags: [Health, STAND]
+      summary: Readiness probe
+      description: |
+        Requires a working database pool. FIPS state and audit queue depth are
+        reported but do not by themselves fail the probe: a deep queue spills to
+        the write-ahead log rather than losing records, and removing the node
+        from rotation would only push load onto its peers.
+
+        The detailed body is returned only when `EXPOSE_HEALTH_DETAIL` is on,
+        which it is not outside local environments, because this endpoint
+        answers before authentication. Otherwise only `status` is present.
+      operationId: healthReady
+      security: []
+      responses:
+        '200':
+          description: Ready for traffic.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Readiness' }
+        '503':
+          description: Not ready; the database pool is unreachable.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Readiness' }
+
+  # --------------------------------------------------------- authentication
+
+  /api/v3/auth/login:
+    post:
+      tags: [Authentication, STAND]
+      summary: Login
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Authenticated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+        '401':
+          description: |
+            The email or the password was wrong. Which one is deliberately not
+            distinguished.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /api/v3/auth/register:
+    post:
+      tags: [Authentication, STAND]
+      summary: Create the first administrator
+      description: |
+        Open only while no user exists, which is how an installation bootstraps
+        itself. Once any user exists this answers `400`: log in instead, and
+        create further users through `POST /api/v3/users`.
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: The first account was created, as an administrator.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400':
+          description: Registration is closed because a user already exists.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  # ------------------------------------------------------------------ users
+
+  /api/v3/users:
+    get:
+      tags: [Users, STAND]
+      summary: List users
+      operationId: listUsers
+      responses:
+        '200':
+          description: Every user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/NoCredential' }
+        '401': { $ref: '#/components/responses/BadCredential' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Users, STAND]
+      summary: Create user
+      description: Requires `user:manage`.
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '200':
+          description: Created. A create answers 200, not 201, as it does in the v3 API.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/NoCredential' }
+        '401': { $ref: '#/components/responses/BadCredential' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/users/me:
+    get:
+      tags: [Users, STAND]
+      summary: Get current user
+      description: |
+        For an API key this is the user that owns the key, which is the identity
+        its classification clearance resolves through.
+      operationId: currentUser
+      responses:
+        '200':
+          description: The caller.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/NoCredential' }
+        '401': { $ref: '#/components/responses/BadCredential' }
+
+  /api/v3/users/{id}:
+    parameters:
+    - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Users, STAND]
+      summary: Get user
+      operationId: getUser
+      responses:
+        '200':
+          description: The user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Users, STAND]
+      summary: Update user
+      description: |
+        Changing your own password or email requires `current_password`, because
+        that operation converts possession of a credential into lasting control
+        of the account. A non-user credential may not do it at all: an API key
+        carries its owner's `user_id`, so without this rule a scoped machine
+        credential could set the owner's password and become an interactive
+        login.
+
+        A caller holding `user:manage` may still reset somebody else's
+        credentials, which is what that permission is for.
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateUserRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    put:
+      tags: [Users, STAND]
+      summary: Update user
+      description: Identical to `PATCH` on this path.
+      operationId: replaceUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateUserRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Users, STAND]
+      summary: Delete user
+      operationId: deleteUser
+      responses:
+        '204': { description: Deleted. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # -------------------------------------------------------------- api keys
+
+  /api/v3/api-keys:
+    get:
+      tags: [API keys, STAND]
+      summary: List API keys
+      description: A caller without `apikey:manage` sees only their own keys.
+      operationId: listApiKeys
+      responses:
+        '200':
+          description: Keys, each with the configurations it may reach.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ApiKey' }
+        '400': { $ref: '#/components/responses/NoCredential' }
+        '401': { $ref: '#/components/responses/BadCredential' }
+    post:
+      tags: [API keys, STAND]
+      summary: Create API key
+      description: |
+        The plaintext key is in the response and is never recoverable
+        afterwards: only its SHA-256 hash is stored. Naming `configuration_ids`
+        requires `apikey:manage`, because it decides what the new credential can
+        reach; a key created without them reaches nothing until it is linked.
+      operationId: createApiKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateApiKeyRequest' }
+      responses:
+        '201':
+          description: Created. This is the only time `key` is returned.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKeyWithSecret' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/api-keys/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags: [API keys, STAND]
+      summary: Get API key
+      operationId: getApiKey
+      responses:
+        '200':
+          description: The key, without its secret.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [API keys, STAND]
+      summary: Delete API key
+      description: |
+        Prefer revoking. Deleting removes the row an audit record's
+        `principal_id` points at, which makes the trail harder to read later.
+      operationId: deleteApiKey
+      responses:
+        '204': { description: Deleted. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v3/api-keys/{id}/rotate:
+    parameters:
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      tags: [SA API keys, API Keys, STAND]
+      summary: Rotate API key
+      description: |
+        Issues a new secret for the same key record, so policies and configuration
+        links attached to it survive. The previous secret stops working
+        immediately across the whole cluster.
+      operationId: rotateApiKey
+      responses:
+        '200':
+          description: Rotated. The new plaintext is returned once.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKeyWithSecret' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v3/api-keys/{id}/revoke:
+    parameters:
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      tags: [SA API keys, API Keys, STAND]
+      summary: Revoke API key
+      description: |
+        Takes effect across every node at once through the revocation epoch,
+        rather than after a cache expires. A revoked key answers `403`.
+      operationId: saRevokeApiKey
+      responses:
+        '204': { description: Revoked. No body. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v3/api-keys/{id}/configurations:
+    parameters:
+    - $ref: '#/components/parameters/ResourceId'
+    patch:
+      tags: [API keys, STAND]
+      summary: Update API Key Configurations
+      description: |
+        Replaces the whole set. Sending an empty list detaches the key from
+        everything, which stops it reaching data without revoking it.
+
+        Requires `apikey:manage` even on your own key, because widening what a
+        credential reaches is a management action. Every id is verified before
+        anything is written, so a request naming one bad id does not
+        half-apply. The change takes effect immediately across the cluster.
+      operationId: setApiKeyConfigurations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetApiKeyContainersRequest' }
+      responses:
+        '200':
+          description: The key, with its new configuration set.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: |
+            Concurrent writes to the same key could not be serialised. The write
+            is sound; retry it.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  # -------------------------------------------------------- configurations
+
+  /api/v3/configurations:
+    get:
+      tags: [Configurations, STAND]
+      summary: List configurations
+      operationId: listConfigurations
+      responses:
+        '200':
+          description: Every configuration. Key material never appears.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Configuration' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Configurations, STAND]
+      summary: Create configuration
+      description: |
+        Provisions a master key through the configured MEK provider. The
+        `proxy_slug` is generated as sixteen random characters unless one is
+        supplied: deriving it from the name would make the URL of every
+        encryption call guessable from the configuration's name.
+      operationId: createConfiguration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateConfigurationRequest' }
+      responses:
+        '200':
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Configuration' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/configurations/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: The configuration's id, or its proxy slug.
+      schema: { type: string }
+    get:
+      tags: [Configurations, STAND]
+      summary: Get configuration
+      operationId: getConfiguration
+      responses:
+        '200':
+          description: The configuration.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Configuration' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Configurations, STAND]
+      summary: Update configuration
+      description: |
+        Changing `proxy_slug` changes the URL every caller encrypts through.
+        Existing ciphertext stays readable, because an envelope names a key
+        record rather than a slug.
+      operationId: updateConfiguration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateConfigurationRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Configuration' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Configurations, STAND]
+      summary: Delete configuration
+      description: |
+        Cascades to every encryption key record the configuration owns, so every
+        payload encrypted through it becomes permanently unreadable. There is no
+        recovery path.
+      operationId: deleteConfiguration
+      responses:
+        '204': { description: Deleted. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v3/configurations/{id}/rotate-mek:
+    parameters:
+    - $ref: '#/components/parameters/ResourceId'
+    post:
+      tags: [Configurations, STAND]
+      summary: Re-wrap the configuration's master key
+      description: |
+        Re-wraps the MEK under the current root key. The MEK value itself does
+        not change, so existing ciphertext stays readable and no re-encryption
+        is needed.
+      operationId: rotateConfigurationMek
+      responses:
+        '200':
+          description: Re-wrapped.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Configuration' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ------------------------------------------------------- classifications
+
+  /api/v3/classifications:
+    get:
+      tags: [Classifications, STAND]
+      summary: List classifications
+      description: |
+        Paginated in the envelope the Laravel v3 API returns, so a console that
+        walks `next_page_url` keeps working.
+
+        The page is taken after the policy filter rather than in SQL, because
+        visibility is a per-classification decision: paging in the query would
+        return short pages whenever a caller could not see some rows, and
+        `total` would describe rows the caller is not allowed to know about.
+      operationId: listClassifications
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: A page of classifications.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Page'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items: { $ref: '#/components/schemas/Classification' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Classifications, STAND]
+      summary: Create classification
+      operationId: createClassification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateClassificationRequest' }
+      responses:
+        '200':
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Classification' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/classifications/{id}:
+    parameters:
+    - name: id
+      in: path
+      required: true
+      description: The classification's id, or its slug.
+      schema: { type: string }
+    get:
+      tags: [Classifications, STAND]
+      summary: Get classification
+      description: |
+        Includes `users` and `roles`, which are the principals holding this
+        clearance. A request authenticated by an API key is cleared through the
+        user that owns the key, so `users` is what decides whether a machine
+        credential can read a record carrying this label.
+      operationId: getClassification
+      responses:
+        '200':
+          description: The classification, with its cleared principals.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Classification' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Classifications, STAND]
+      summary: Update classification
+      operationId: updateClassification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateClassificationRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Classification' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Classifications, STAND]
+      summary: Delete classification
+      operationId: deleteClassification
+      responses:
+        '204': { description: Deleted. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v3/classifications/{id}/grants:
+    parameters:
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags: [Classifications, STAND]
+      summary: List clearance grants
+      operationId: listClassificationGrants
+      responses:
+        '200':
+          description: The principals holding this clearance.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Grant' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    post:
+      tags: [Classifications, STAND]
+      summary: Grant clearance
+      operationId: grantClassification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Grant' }
+      responses:
+        '204': { description: Granted. No body. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+    delete:
+      tags: [Classifications, STAND]
+      summary: Revoke clearance
+      operationId: revokeClassificationGrant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Grant' }
+      responses:
+        '204': { description: Revoked. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # --------------------------------------------------------------- policies
+
+  /api/v3/policies:
+    get:
+      tags: [Policies, STAND]
+      summary: List policies
+      operationId: listPolicies
+      parameters:
+      - name: principal_type
+        in: query
+        schema: { $ref: '#/components/schemas/PrincipalType' }
+      - name: principal_id
+        in: query
+        schema: { type: string }
+      responses:
+        '200':
+          description: Matching policies.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Policy' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Policies, STAND]
+      summary: Create policy
+      description: |
+        Actions and resources are validated on write, so a typo cannot silently
+        create a policy that grants nothing. A non-administrator cannot grant
+        what it does not itself hold, and cannot grant wildcards.
+      operationId: createPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePolicyRequest' }
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Policy' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/policies/{id}:
+    parameters:
+    - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags: [Policies, STAND]
+      summary: Get policy
+      operationId: getPolicy
+      responses:
+        '200':
+          description: The policy.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Policy' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Policies, STAND]
+      summary: Delete policy
+      description: |
+        Takes effect across every node at once. A deny may not be deleted if
+        doing so would leave nobody able to manage policy.
+      operationId: deletePolicy
+      responses:
+        '204': { description: Deleted. }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  # ------------------------------------------------------------- encryption
+
+  /api/v3/encryption/{proxy}/encrypt:
+    parameters:
+    - $ref: '#/components/parameters/ProxySlug'
+    post:
+      tags: [Encryption, STAND]
+      summary: Encrypt payload
+      description: |
+        Two modes, chosen by header:
+
+        - `X-Qanapi-Fields` names dot-separated paths inside a JSON body. Each
+          named leaf is replaced by an envelope string; everything else is
+          returned untouched.
+        - `X-Qanapi-Full-Body: true` treats the whole body as one payload and
+          returns a single envelope as `text/plain`, whatever the body was.
+
+        Every payload gets a fresh key encryption key and data encryption key,
+        so a nonce is never reused under a key. Strictly AES-256-GCM: a request
+        asking for another algorithm is refused rather than quietly honoured.
+
+        Setting `X-Qanapi-Destination` turns the call into a proxy. See the
+        response description and docs/api-guide.md.
+      operationId: encrypt
+      parameters:
+      - $ref: '#/components/parameters/Fields'
+      - $ref: '#/components/parameters/FullBody'
+      - $ref: '#/components/parameters/Mode'
+      - $ref: '#/components/parameters/ClassificationHeader'
+      - $ref: '#/components/parameters/RequireFields'
+      - $ref: '#/components/parameters/Destination'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              description: |
+                Any JSON document in field mode. In whole-body mode the body may
+                be any bytes at all, including non-JSON.
+            example: {
+              "name": "Jane Doe",
+              "ssn": "123-45-6789",
+              "dob": "1980-01-01"
+            }
+          text/plain:
+            schema: { type: string }
+      responses:
+        '200':
+          description: |
+            In field mode, the document with the named fields replaced by
+            envelopes. In whole-body mode, one envelope as `text/plain`.
+
+            When `X-Qanapi-Destination` was set this is instead whatever the
+            destination answered, relayed verbatim with its own status, body and
+            headers, and stamped with `X-Qanapi-Forwarded-To`.
+          headers:
+            X-Qanapi-Action-Count: { $ref: '#/components/headers/ActionCount' }
+            X-Qanapi-Forwarded-To: { $ref: '#/components/headers/ForwardedTo' }
+          content:
+            application/json:
+              example: {
+                "name": "Jane Doe",
+                "ssn": "QANAPI-RS:v1:MDFhMDg2ZGQ:Vpp6gZK4ZRUwgvpcnA:$",
+                "dob": "QANAPI-RS:v1:MDFhMDg2ZGU:T3RoZXJjaXBoZXJ0ZXh0:$"
+              }
+            text/plain:
+              schema:
+                type: string
+                examples: ['QANAPI-RS:v1:MDFhMDg2ZGQ:Vpp6gZK4ZRUwgvpcnA:$']
+        '400': { $ref: '#/components/responses/NoCredential' }
+        '401': { $ref: '#/components/responses/BadCredential' }
+        '403':
+          description: |
+            The policy engine refused the action, or the caller does not hold
+            the clearance named in `X-Qanapi-Classification`. Applying a
+            classification the caller lacks is refused rather than allowed,
+            because it would let them write data they immediately cannot read.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404': { $ref: '#/components/responses/ProxyNotReachable' }
+        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500':
+          description: |
+            A forwarding destination was named and could not be reached. The
+            cryptography succeeded; the forward did not.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/v3/encryption/{proxy}/decrypt:
+    parameters:
+    - $ref: '#/components/parameters/ProxySlug'
+    post:
+      tags: [Encryption, STAND]
+      summary: Decrypt payload
+      description: |
+        The inverse of encrypt, with the same two modes and the same forwarding
+        behaviour. An envelope is refused unless it was produced in the
+        configuration it is presented to, independently of the AEAD check, and
+        unless the caller holds the clearance the record carries.
+
+        Envelopes from the legacy PHP implementation, which begin `qanapi:`, are
+        refused as a format error rather than attempted and failed.
+      operationId: decrypt
+      parameters:
+      - $ref: '#/components/parameters/Fields'
+      - $ref: '#/components/parameters/FullBody'
+      - $ref: '#/components/parameters/Mode'
+      - $ref: '#/components/parameters/Destination'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example: {
+              "name": "Jane Doe",
+              "ssn": "QANAPI-RS:v1:MDFhMDg2ZGQ:Vpp6gZK4ZRUwgvpcnA:$"
+            }
+          text/plain:
+            schema: { type: string }
+      responses:
+        '200':
+          description: The plaintext, in the shape it was encrypted from.
+          headers:
+            X-Qanapi-Action-Count: { $ref: '#/components/headers/ActionCount' }
+            X-Qanapi-Forwarded-To: { $ref: '#/components/headers/ForwardedTo' }
+          content:
+            application/json:
+              example: {
+                "name": "Jane Doe",
+                "ssn": "123-45-6789"
+              }
+            text/plain:
+              schema: { type: string }
+        '400':
+          description: |
+            No credential, or the envelope could not be read. Every
+            cryptographic failure answers identically, so neither the status nor
+            the body says whether a padding check, an authentication tag or a
+            key lookup was what failed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/BadCredential' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/ProxyNotReachable' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  # -------------------------------------------------------------------- kms
+
+  /api/v3/kms:
+    get:
+      tags: [KMS, STAND]
+      summary: List KMS keys
+      operationId: listKmsKeys
+      parameters:
+      - name: proxy_slug
+        in: query
+        description: Restrict to keys owned by one configuration.
+        schema: { type: string }
+      - name: state
+        in: query
+        schema: { $ref: '#/components/schemas/KeyState' }
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Matching keys, without their material.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/KmsKeyBrief' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v3/kms/create/{proxy}:
+    parameters:
+    - $ref: '#/components/parameters/ProxySlug'
+    post:
+      tags: [KMS, STAND]
+      summary: Generate KMS key
+      description: |
+        `type` is `AES` or `RSA`. The reported `algorithm` follows the naming of
+        the v3 API this service replaces, so an AES key is `AES-256` with the
+        cipher mode reported separately in `cipher_mode`.
+
+        A key is not exportable unless `private_material_retrievable` is set at
+        creation. That decision cannot be made later for a key that was
+        generated without it.
+      operationId: createKmsKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateKmsKeyRequest' }
+      responses:
+        '200':
+          description: |
+            Created. `private_key_material` is present only when
+            `export_on_create` was set and a wrap key was named.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KmsKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/ConfigurationNotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/kms/import/{proxy}:
+    parameters:
+    - $ref: '#/components/parameters/ProxySlug'
+    post:
+      tags: [KMS, STAND]
+      summary: Import key
+      description: |
+        Either a private key wrapped as a JWE, or a bare `public_key_pem`.
+        Importing only a public half keeps the unwrapping key off this server
+        entirely, which is the point of doing it that way.
+      operationId: importKmsKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ImportKmsKeyRequest' }
+      responses:
+        '200':
+          description: Imported.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KmsKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/ConfigurationNotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/kms/{uuid}:
+    parameters:
+    - $ref: '#/components/parameters/KeyUuid'
+    get:
+      tags: [KMS, STAND]
+      summary: Get KMS key
+      operationId: getKmsKey
+      responses:
+        '200':
+          description: The key. Private material is never included here.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KmsKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [KMS, STAND]
+      summary: Update KMS key
+      description: |
+        Metadata only. `private_material_retrievable` can be withdrawn but not
+        granted: a key generated as non-exportable stays that way, because the
+        guarantee made when it was created has to keep holding.
+      operationId: updateKmsKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateKmsKeyRequest' }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KmsKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/kms/{uuid}/export:
+    parameters:
+    - $ref: '#/components/parameters/KeyUuid'
+    post:
+      tags: [KMS, STAND]
+      summary: Export a key's private material
+      description: |
+        Returns the private half wrapped as an RFC 7516 JWE under the named RSA
+        wrap key, so it is readable only by whoever holds that key's private
+        half. Requires `kms:export` and a key marked
+        `private_material_retrievable`.
+
+        Each export increments `export_count`, which is on the audit trail.
+      operationId: exportKmsKey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExportKmsKeyRequest' }
+      responses:
+        '200':
+          description: The key, with `private_key_material.jwe` present.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KmsKey' }
+        '403':
+          description: |
+            The key is not marked exportable, its export window has closed, or
+            the caller lacks `kms:export`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/kms/{uuid}/rotate:
+    parameters:
+    - $ref: '#/components/parameters/KeyUuid'
+    post:
+      tags: [KMS, STAND]
+      summary: Rotate KMS key
+      description: |
+        Generates a replacement with the same algorithm and settings, linked to
+        the original through `rotated_from`. The original is left readable so
+        material encrypted under it still decrypts.
+      operationId: rotateKmsKey
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RotateKmsKeyRequest' }
+      responses:
+        '200':
+          description: The replacement key.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KmsKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/kms/{uuid}/revoke:
+    parameters:
+    - $ref: '#/components/parameters/KeyUuid'
+    patch:
+      tags: [KMS, STAND]
+      summary: Revoke KMS key
+      description: |
+        Takes effect across every node at once through the revocation epoch. A
+        revoked key cannot encrypt, decrypt or export until it is restored.
+      operationId: revokeKmsKey
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RevokeKmsKeyRequest' }
+      responses:
+        '200':
+          description: Revoked.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KmsKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v3/kms/{uuid}/restore:
+    parameters:
+    - $ref: '#/components/parameters/KeyUuid'
+    patch:
+      tags: [KMS, STAND]
+      summary: Restore revoked key
+      operationId: restoreKmsKey
+      responses:
+        '200':
+          description: Restored to active.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/KmsKey' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ------------------------------------------------------------------ audit
+
+  /api/v3/audit-logs:
+    get:
+      tags: [Audit, STAND]
+      summary: Get audit logs
+      operationId: listAuditLogs
+      parameters:
+      - { name: from, in: query, schema: { type: string, format: date-time } }
+      - { name: to, in: query, schema: { type: string, format: date-time } }
+      - name: action
+        in: query
+        description: An exact action, or a `kms.*` style prefix.
+        schema: { type: string, examples: ['encryption.encrypt', 'kms.*'] }
+      - { name: container_id, in: query, schema: { type: string } }
+      - { name: principal_id, in: query, schema: { type: string } }
+      - name: principal_type
+        in: query
+        schema: { $ref: '#/components/schemas/PrincipalType' }
+      - name: status
+        in: query
+        schema: { type: string, enum: [success, denied, error] }
+      - { name: request_id, in: query, schema: { type: string } }
+      - name: instance_id
+        in: query
+        description: |
+          Restrict to one cluster node. Hash chains are maintained per instance,
+          so this is the natural unit for chain verification.
+        schema: { type: string }
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: A page of records.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Page'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items: { $ref: '#/components/schemas/AuditRecord' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v3/audit-logs/export:
+    post:
+      tags: [Audit, STAND]
+      summary: Export/purge audit logs
+      description: |
+        Streams matching records as JSONL or CSV, optionally gzipped. With
+        `purge` set, the exported records are deleted in the same transaction
+        that read them, so nothing can be purged that was not successfully
+        exported.
+
+        A purge is itself recorded, with the window it covered, so a later chain
+        verification can tell an authorised purge apart from tampering. Requires
+        `audit:export`, and `audit:purge` as well when purging.
+      operationId: exportAuditLogs
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExportRequest' }
+      responses:
+        '200':
+          description: The export stream.
+          content:
+            application/x-ndjson:
+              schema: { type: string }
+            text/csv:
+              schema: { type: string }
+            application/gzip:
+              schema: { type: string, format: binary }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+
+  /api/v3/audit-logs/verify:
+    get:
+      tags: [Audit, STAND]
+      summary: Verify the hash chain
+      description: |
+        Recomputes the chain over a range without exporting it. Each record is
+        an HMAC over the whole record and its predecessor's hash, so editing any
+        field of any record breaks every link after it.
+
+        `gaps` are distinguished from `broken_links` deliberately. A filtered
+        query legitimately produces gaps, and so does an authorised purge; a
+        broken link is the finding that matters. Purge windows are consulted, so
+        a gap explained by a recorded purge is reported as such rather than as
+        tampering.
+      operationId: verifyAuditChain
+      parameters:
+      - { name: from, in: query, schema: { type: string, format: date-time } }
+      - { name: to, in: query, schema: { type: string, format: date-time } }
+      - name: instance_id
+        in: query
+        description: Chains are per node, so verifying one node at a time is normal.
+        schema: { type: string }
+      responses:
+        '200':
+          description: The verification summary.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChainVerification' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # -------------------------------------------------------------- transport
+
+  /api/v3/qanapi-public-key:
+    get:
+      tags: [Transport, STAND]
+      summary: The service's public key
+      description: |
+        Unauthenticated, because a client needs this before it can encrypt a
+        request body. Use it to wrap a request as an RFC 7516 JWE when the
+        payload should not be readable by anything between the client and this
+        service, including the reverse proxy that terminates TLS.
+      operationId: getQanapiPublicKey
+      security: []
+      responses:
+        '200':
+          description: The current public key.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QanapiKey' }
+        '404':
+          description: No key pair has been provisioned.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/v3/qanapi-public-key/rotate:
+    post:
+      tags: [Transport, STAND]
+      summary: Rotate the service's key pair
+      description: |
+        Mints a new pair and advertises it. Earlier keys stay usable for
+        inbound requests already in flight, so rotation does not reject traffic
+        encrypted moments before it.
+      operationId: rotateQanapiKey
+      responses:
+        '200':
+          description: The new public key.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QanapiKey' }
+        '400': { $ref: '#/components/responses/NoCredential' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Qanapi-Authorization
+      description: |
+        A machine credential, `qk_` followed by its secret. The first twelve
+        characters are an indexed prefix; the rest is compared in constant time
+        against a stored SHA-256 hash. A key reaches only the configurations it is
+        linked to.
+
+        It may also be sent as `Authorization: Bearer qk_...`, which is
+        recognised by the prefix.
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        A user token from `POST /api/v3/auth/login`. The token asserts a role,
+        but the database decides it, so a role changed or a user deleted after
+        the token was issued takes effect immediately. A token minted before a
+        password change is refused.
+
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    KeyUuid:
+      name: uuid
+      in: path
+      required: true
+      description: The key's `key_id`.
+      schema: { type: string, format: uuid }
+    ProxySlug:
+      name: proxy
+      in: path
+      required: true
+      description: |
+        The configuration's proxy slug. Sixteen random lowercase characters unless
+        one was pinned at creation.
+      schema: { type: string, examples: [952zpx6vyig3sdyp] }
+    Page:
+      name: page
+      in: query
+      description: 1-based page number.
+      schema: { type: integer, minimum: 1, default: 1 }
+    PerPage:
+      name: per_page
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 15 }
+    Fields:
+      name: X-Qanapi-Fields
+      in: header
+      description: |
+        Comma-separated dot paths to encrypt or decrypt, for example
+        `ssn,user.address.postcode`. Absent in whole-body mode.
+      schema: { type: string, examples: ['ssn,user.dob'] }
+    FullBody:
+      name: X-Qanapi-Full-Body
+      in: header
+      description: Treat the whole body as one payload. `true`, `1`, `yes` or `on`.
+      schema: { type: string, examples: ['true'] }
+    Mode:
+      name: X-Qanapi-Mode
+      in: header
+      description: Alternative spelling of whole-body mode; `full_body`.
+      schema: { type: string, enum: [full_body, full-body] }
+    ClassificationHeader:
+      name: X-Qanapi-Classification
+      in: header
+      description: |
+        Apply a classification to what is being encrypted, by slug or id.
+        Refused unless the caller holds that clearance.
+      schema: { type: string }
+    RequireFields:
+      name: X-Qanapi-Require-Fields
+      in: header
+      description: |
+        Fail the request when a named field path matched nothing, rather than
+        silently returning the document unchanged. Off by default; worth setting
+        in any caller that would rather hear about a typo than store plaintext.
+      schema: { type: string, examples: ['true'] }
+    Destination:
+      name: X-Qanapi-Destination
+      in: header
+      description: |
+        Forward the processed payload to this absolute URL and relay the answer
+        back. Every request header travels except `x-qanapi-*`, `authorization`
+        and the hop-by-hop set. Restricted by `FORWARD_ALLOWED_HOSTS` where the
+        installation sets it.
+      schema: { type: string, format: uri }
+
+  headers:
+    ActionCount:
+      description: How many cryptographic operations the request performed.
+      schema: { type: integer }
+    ForwardedTo:
+      description: |
+        Present only when the response was relayed from a destination, naming
+        it, so a caller can tell a proxied answer from one this service produced.
+      schema: { type: string, format: uri }
+    RateLimitLimit:
+      description: Requests allowed per minute, per node.
+      schema: { type: integer }
+    RateLimitRemaining:
+      description: Requests left in the current window.
+      schema: { type: integer }
+
+  responses:
+    NoCredential:
+      description: |
+        No credential was presented. `400` rather than `401`, matching the v3
+        API this service replaces; `401` means a credential was presented and
+        did not verify.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    BadCredential:
+      description: A credential was presented and did not verify.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: |
+        Authenticated, but not permitted. Also returned for a revoked API key.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No such record.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ConfigurationNotFound:
+      description: No configuration has that proxy slug, or this key may not reach it.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ProxyNotReachable:
+      description: |
+        Reported as a missing API key. The answer is deliberately the same
+        whether no configuration has that slug or the presented key is not linked to
+        the one that does, so an unrelated key cannot enumerate configurations.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example: {
+            "message": "API key not found",
+            "error": "ApiKeyNotFoundException"
+          }
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationFailed:
+      description: |
+        The request body or a parameter is invalid. `message` is always
+        `Validation failed`; the specifics are in `errors`, keyed by field.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ValidationError' }
+    PayloadTooLarge:
+      description: The body exceeded `MAX_BODY_BYTES`, 10 MB by default.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: The rate limit for this client address was exhausted.
+      headers:
+        X-RateLimit-Limit: { $ref: '#/components/headers/RateLimitLimit' }
+        X-RateLimit-Remaining: { $ref: '#/components/headers/RateLimitRemaining' }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+
+    # ------------------------------------------------------------- errors
+
+    Error:
+      type: object
+      required: [message, error]
+      properties:
+        message:
+          type: string
+          description: |
+            Human readable. A 5xx is described by its category and nothing more:
+            operational detail such as a path or a setting name stays in the log.
+          examples: ['Unauthorized.']
+        error:
+          type: string
+          description: |
+            A stable machine readable code. This service sends it and the v3 API
+            it replaces does not, which is what lets the two share the same
+            `message` strings without losing specificity: `Resource not found.`
+            still arrives alongside `KmsKeyNotFoundException`.
+          examples: [InvalidApiKeyException]
+
+    ValidationError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - type: object
+        required: [errors]
+        properties:
+          errors:
+            type: object
+            description: |
+              Messages keyed by the field they concern. A failure with no single
+              field to blame is filed under `request`.
+            additionalProperties:
+              type: array
+              items: { type: string }
+            examples:
+            - {
+                "type": ["The type field is required."],
+                "configuration_ids": ["No configuration has the id `...`."]
+              }
+
+    # -------------------------------------------------------------- shared
+
+    PrincipalType:
+      type: string
+      enum: [user, api_key, role]
+      description: |
+        The kinds of principal a policy or a clearance grant may name. An audit
+        record may additionally carry `anonymous` or `system`.
+
+    Page:
+      type: object
+      description: |
+        The paginator envelope of the v3 API this service replaces, reproduced
+        field for field so a console that walks `next_page_url` keeps working.
+      required: [current_page, data, last_page, path, per_page, total]
+      properties:
+        current_page: { type: integer }
+        data: { type: array }
+        first_page_url: { type: string, format: uri }
+        from:
+          type: [integer, 'null']
+          description: 1-based index of the first row on this page; null when empty.
+        last_page: { type: integer, description: At least 1, even for no results. }
+        last_page_url: { type: string, format: uri }
+        links:
+          type: array
+          description: Built for rendering a pager. Labels carry HTML entities.
+          items:
+            type: object
+            properties:
+              url: { type: [string, 'null'] }
+              label: { type: string, examples: ['&laquo; Previous'] }
+              page: { type: [integer, 'null'] }
+              active: { type: boolean }
+        next_page_url: { type: [string, 'null'], format: uri }
+        path: { type: string, format: uri }
+        per_page: { type: integer }
+        prev_page_url: { type: [string, 'null'], format: uri }
+        to: { type: [integer, 'null'] }
+        total: { type: integer }
+
+    # --------------------------------------------------------------- users
+
+    User:
+      type: object
+      required: [id, email, role, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: [string, 'null'] }
+        role: { type: string, enum: [admin, user] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+
+    LoginResponse:
+      type: object
+      required: [token, token_type, expires_in, user]
+      properties:
+        token: { type: string, description: A signed JWT. }
+        token_type: { type: string, const: Bearer }
+        expires_in: { type: integer, description: Seconds until expiry. }
+        user: { $ref: '#/components/schemas/User' }
+
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password:
+          type: string
+          format: password
+          minLength: 12
+          description: Hashed with Argon2id (m=19456, t=2, p=1).
+        name: { type: string }
+        role: { type: string, enum: [admin, user] }
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        name: { type: string }
+        password: { type: string, format: password, minLength: 12 }
+        role: { type: string, enum: [admin, user] }
+        current_password:
+          type: string
+          format: password
+          description: |
+            Required when changing your own password or email. An administrator
+            may not change their own role at all.
+
+    # ------------------------------------------------------------ api keys
+
+    ApiKey:
+      type: object
+      required: [id, user_id, name, prefix, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        user_id:
+          type: string
+          format: uuid
+          description: |
+            The owning user. Classification clearance for this key resolves
+            through this user and their role.
+        name: { type: string }
+        prefix:
+          type: string
+          description: The indexed first twelve characters.
+          examples: [qk_TEcj6-ebd]
+        revoked_at: { type: [string, 'null'], format: date-time }
+        last_used_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        configurations:
+          type: array
+          description: |
+            The configurations this key may reach. An empty list means none: the
+            grant is explicit, so a newly minted key cannot touch data until
+            somebody says which data it is for.
+          items:
+            type: object
+            required: [id, name, proxy_slug]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              proxy_slug: { type: string }
+
+    ApiKeyWithSecret:
+      allOf:
+      - $ref: '#/components/schemas/ApiKey'
+      - type: object
+        required: [key]
+        properties:
+          key:
+            type: string
+            description: |
+              The plaintext, returned once and never recoverable afterwards.
+              Only its SHA-256 hash is stored.
+            examples: [qk_TEcj6-ebdBWLHz-BBorydQlxrjIuRJYG]
+
+    CreateApiKeyRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        user_id:
+          type: string
+          format: uuid
+          description: |
+            Defaults to the authenticated user. Minting a key for somebody else
+            requires `apikey:manage`.
+        configuration_ids:
+          type: array
+          items: { type: string, format: uuid }
+          description: Requires `apikey:manage`. Omitted means the key reaches nothing.
+
+    SetApiKeyContainersRequest:
+      type: object
+      required: [configuration_ids]
+      properties:
+        configuration_ids:
+          type: array
+          description: The complete new set. An empty array detaches everything.
+          items: { type: string, format: uuid }
+
+    # ------------------------------------------------------ configurations
+
+    Configuration:
+      type: object
+      required: [id, name, proxy_slug, algorithm, mek_provider, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        proxy_slug:
+          type: string
+          description: Appears in the URL of every encryption call.
+        algorithm: { type: string, const: aes-256-gcm }
+        mek_provider:
+          type: string
+          description: |
+            Where the master key lives. `local_aek` keeps it in the database
+            sealed under the application key; other providers hand custody to an
+            HSM or a cloud KMS.
+          examples: [local_aek]
+        mek_reference:
+          type: [string, 'null']
+          description: An HSM handle or key ARN, for providers that use one.
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CreateConfigurationRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        proxy_slug:
+          type: string
+          description: |
+            Optional. One is generated at random when omitted, which is the
+            recommended case.
+
+    UpdateConfigurationRequest:
+      type: object
+      properties:
+        name: { type: string }
+        proxy_slug: { type: string }
+
+    # ----------------------------------------------------- classifications
+
+    Classification:
+      type: object
+      required: [id, name, slug, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        users:
+          type: array
+          description: Users holding this clearance directly.
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              email: { type: string, format: email }
+              name: { type: string }
+        roles:
+          type: array
+          description: Roles whose members hold this clearance.
+          items:
+            type: object
+            properties:
+              name: { type: string }
+
+    CreateClassificationRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        slug: { type: string, description: Derived from the name when omitted. }
+        description: { type: string }
+
+    UpdateClassificationRequest:
+      type: object
+      properties:
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string }
+
+    Grant:
+      type: object
+      required: [principal_type, principal_id]
+      properties:
+        principal_type: { $ref: '#/components/schemas/PrincipalType' }
+        principal_id:
+          type: string
+          description: |
+            A user id, an API key id, or a role name, according to
+            `principal_type`.
+
+    # ------------------------------------------------------------ policies
+
+    Policy:
+      type: object
+      required: [id, name, effect, principal_type, principal_id, actions, resources, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        effect:
+          type: string
+          enum: [allow, deny]
+          description: Deny always wins, and the default with no policy is deny.
+        principal_type: { $ref: '#/components/schemas/PrincipalType' }
+        principal_id: { type: string }
+        actions:
+          type: array
+          description: |
+            Exact actions or namespace wildcards, for example `kms:*`. `*`
+            grants everything and only an administrator may write it.
+          items: { type: string, examples: [encrypt, 'kms:*'] }
+        resources:
+          type: array
+          description: |
+            Prefixed specifiers: `container:<slug>`, `key:<uuid>`,
+            `classification:<slug>`, `audit:`, `system:`, or `*`.
+          items: { type: string, examples: ['container:952zpx6vyig3sdyp'] }
+        created_at: { type: string, format: date-time }
+
+    CreatePolicyRequest:
+      type: object
+      required: [name, effect, principal_type, principal_id, actions, resources]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        effect: { type: string, enum: [allow, deny] }
+        principal_type: { $ref: '#/components/schemas/PrincipalType' }
+        principal_id: { type: string }
+        actions: { type: array, items: { type: string } }
+        resources: { type: array, items: { type: string } }
+
+    # ----------------------------------------------------------------- kms
+
+    KeyState:
+      type: string
+      enum: [active, revoked]
+
+    KmsKeyBrief:
+      type: object
+      required: [key_id, type, algorithm, state, created_at]
+      properties:
+        key_id: { type: string, format: uuid }
+        name: { type: [string, 'null'] }
+        external_id:
+          type: [string, 'null']
+          description: A caller's own identifier, for reconciling against another system.
+        type: { type: string, enum: [AES, RSA] }
+        algorithm:
+          type: string
+          description: |
+            Named as the v3 API this service replaces names it: the key length
+            without the cipher mode.
+          examples: [AES-256, RSA-2048]
+        cipher_mode:
+          type: string
+          enum: [gcm, cbc]
+          description: |
+            Absent for RSA. This service tracks the mode per key and the v3 API
+            does not, so it is reported here rather than folded into `algorithm`.
+        state: { $ref: '#/components/schemas/KeyState' }
+        created_at: { type: string, format: date-time }
+
+    KmsKey:
+      allOf:
+      - $ref: '#/components/schemas/KmsKeyBrief'
+      - type: object
+        required: [private_material_retrievable, usage_mask, updated_at]
+        properties:
+          private_material_retrievable:
+            type: boolean
+            description: |
+              Whether the private half may ever leave this service. Fixed at
+              creation: it can be withdrawn later but never granted, because the
+              guarantee made when the key was generated has to keep holding.
+          usage_mask:
+            type: array
+            items: { type: string, enum: [encrypt, decrypt, sign, verify] }
+          classification_id: { type: string, format: uuid }
+          revoke_reason: { type: string }
+          rotated_from:
+            type: string
+            format: uuid
+            description: The key this one replaced, when it came from a rotation.
+          export_window_expires_at:
+            type: [string, 'null']
+            format: date-time
+            description: |
+              After this, export is refused even for an exportable key. Present
+              only on exportable keys.
+          export_count:
+            type: integer
+            description: How many times the private half has been exported.
+          public_key_pem:
+            type: string
+            description: RSA keys only.
+          private_key_material:
+            type: object
+            description: |
+              Present only in the response to an export, or to a create with
+              `export_on_create`. Never returned by a plain fetch.
+            required: [jwe]
+            properties:
+              jwe:
+                type: string
+                description: |
+                  RFC 7516 compact serialisation, `RSA-OAEP-256` with `A256GCM`,
+                  wrapped to the named wrap key.
+          updated_at: { type: string, format: date-time }
+
+    CreateKmsKeyRequest:
+      type: object
+      required: [type]
+      properties:
+        type: { type: string, enum: [AES, RSA] }
+        algorithm:
+          type: string
+          description: |
+            The explicit internal name, which is the only way to ask for CBC.
+            Derived from `type` and the length when omitted.
+          enum: [aes-128-gcm, aes-192-gcm, aes-256-gcm, aes-128-cbc, aes-192-cbc, aes-256-cbc, rsa-2048, rsa-4096]
+        key_length: { type: integer, enum: [128, 192, 256], default: 256 }
+        rsa_modulus: { type: integer, enum: [2048, 4096], default: 2048 }
+        usage_mask:
+          type: array
+          items: { type: string, enum: [encrypt, decrypt, sign, verify] }
+        name: { type: string }
+        external_id: { type: string }
+        classification_id: { type: string, format: uuid }
+        classification: { type: string, description: A classification slug, as an alternative to the id. }
+        private_material_retrievable: { type: boolean, default: false }
+        export_window_expires_at: { type: string, format: date-time }
+        export_on_create:
+          type: boolean
+          default: false
+          description: |
+            Return the private half in this response, wrapped to
+            `wrap_with_key_id`. Requires `private_material_retrievable`.
+        wrap_with_key_id: { type: string, format: uuid }
+
+    ImportKmsKeyRequest:
+      type: object
+      description: Supply exactly one of `jwe` or `public_key_pem`.
+      properties:
+        type: { type: string, enum: [AES, RSA] }
+        algorithm: { type: string }
+        jwe:
+          type: string
+          description: |
+            The private key wrapped to this service's transport public key, from
+            `GET /api/v3/qanapi-public-key`.
+        public_key_pem:
+          type: string
+          description: |
+            A bare public half. Importing only this keeps the unwrapping key off
+            this server entirely.
+        usage_mask: { type: array, items: { type: string } }
+        name: { type: string }
+        external_id: { type: string }
+        classification_id: { type: string, format: uuid }
+        private_material_retrievable: { type: boolean, default: false }
+        export_window_expires_at: { type: string, format: date-time }
+
+    UpdateKmsKeyRequest:
+      type: object
+      properties:
+        name: { type: string }
+        external_id: { type: string }
+        usage_mask: { type: array, items: { type: string } }
+        private_material_retrievable:
+          type: boolean
+          description: May be set to false, never to true.
+        export_window_expires_at: { type: string, format: date-time }
+
+    ExportKmsKeyRequest:
+      type: object
+      required: [wrap_with_key_id]
+      properties:
+        wrap_with_key_id:
+          type: string
+          format: uuid
+          description: |
+            An RSA key whose public half wraps the export. Whoever holds its
+            private half is the only party that can read the result.
+
+    RotateKmsKeyRequest:
+      type: object
+      properties:
+        export_on_create: { type: boolean, default: false }
+        wrap_with_key_id: { type: string, format: uuid }
+
+    RevokeKmsKeyRequest:
+      type: object
+      properties:
+        reason: { type: string, examples: ['Key compromise'] }
+
+    # --------------------------------------------------------------- audit
+
+    AuditRecord:
+      type: object
+      description: |
+        Append-only and hash chained. `record_hash` is an HMAC over the whole
+        record and its predecessor's hash, so editing any field of any record
+        breaks every link after it.
+      required: [id, timestamp, request_id, instance_id, principal_type, action, status, status_code, latency_ms, record_hash, chain_version, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        timestamp: { type: string, format: date-time }
+        request_id:
+          type: string
+          description: |
+            Correlates with the `X-Request-Id` of the request. A client-supplied
+            value is preserved rather than overwritten, so a caller can tie a
+            support request to its own trace.
+        instance_id:
+          type: string
+          description: |
+            The node that wrote the record. Chains are maintained per node, so
+            this is the unit of verification.
+        principal_type:
+          type: string
+          enum: [user, api_key, anonymous, system]
+        principal_id: { type: [string, 'null'] }
+        client_ip:
+          type: [string, 'null']
+          description: |
+            Honoured from a forwarding header only when the immediate peer is
+            inside `TRUSTED_PROXY_CIDRS`; otherwise the peer address itself.
+        user_agent: { type: [string, 'null'] }
+        action: { type: string, examples: ['encryption.encrypt'] }
+        resource_type: { type: [string, 'null'] }
+        resource_id: { type: [string, 'null'] }
+        container_id: { type: [string, 'null'], format: uuid }
+        status:
+          type: string
+          enum: [success, denied, error]
+          description: |
+            `denied` is an authorisation decision and `error` is a fault. They
+            are distinguished because a wall of denials is a different operational
+            signal from a wall of faults.
+        status_code: { type: integer }
+        error_message: { type: [string, 'null'] }
+        latency_ms: { type: integer }
+        metadata:
+          type: [object, 'null']
+          description: |
+            Action-specific detail: the fields touched, the mode, the byte
+            count, a forwarding destination and the status it returned.
+        record_hash: { type: string }
+        previous_record_hash: { type: [string, 'null'] }
+        chain_version:
+          type: integer
+          description: |
+            Which chain construction produced this row. Version 1 is an unkeyed
+            SHA-256; version 2 is an HMAC. Existing rows keep verifying under
+            the construction that wrote them.
+        created_at: { type: string, format: date-time }
+
+    ExportRequest:
+      type: object
+      description: Accepts every filter the query endpoint accepts, plus these.
+      properties:
+        from: { type: string, format: date-time }
+        to: { type: string, format: date-time }
+        action: { type: string }
+        container_id: { type: string }
+        principal_id: { type: string }
+        principal_type: { type: string }
+        status: { type: string }
+        request_id: { type: string }
+        instance_id: { type: string }
+        format: { type: string, enum: [jsonl, csv], default: jsonl }
+        gzip: { type: boolean, default: false }
+        purge:
+          type: boolean
+          default: false
+          description: |
+            Delete the exported records in the same transaction that read them,
+            so nothing is purged that was not successfully exported. Requires
+            `audit:purge`, and is itself recorded with the window it covered.
+
+    ChainVerification:
+      type: object
+      properties:
+        checked: { type: integer, description: Records examined. }
+        broken_links:
+          type: array
+          description: |
+            The finding that matters: a record whose hash does not follow from
+            its predecessor, which means the row was edited after it was written.
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              instance_id: { type: string }
+              timestamp: { type: string, format: date-time }
+        gaps:
+          type: array
+          description: |
+            A missing predecessor. Expected whenever the query is filtered, and
+            expected after an authorised purge, so this is reported separately
+            from a broken link rather than raised as tampering.
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              explained_by_purge:
+                type: boolean
+                description: Whether a recorded purge window accounts for it.
+        gaps_expected:
+          type: boolean
+          description: Whether the filters themselves narrow the range.
+
+    # ----------------------------------------------------------- transport
+
+    QanapiKey:
+      type: object
+      required: [key_id, algorithm, public_key_material, rotates_after, expires_at, created_at]
+      properties:
+        key_id: { type: string, examples: [QANAPI-PUB-1DAF66C2] }
+        algorithm: { type: string, examples: [RSA-2048] }
+        public_key_material: { type: string, description: PEM. }
+        rotates_after:
+          type: string
+          format: date-time
+          description: When the service begins advertising a successor.
+        expires_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+
+    # -------------------------------------------------------------- health
+
+    Readiness:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [ready, unavailable] }
+        instance_id: { type: string }
+        database: { type: boolean }
+        fips:
+          type: object
+          properties:
+            build:
+              type: boolean
+              description: Whether the binary was compiled with the validated module.
+            active:
+              type: boolean
+              description: Whether that module is in FIPS mode at runtime.
+        audit:
+          type: object
+          properties:
+            queue_depth: { type: integer }
+            metrics:
+              type: object
+              properties:
+                enqueued: { type: integer }
+                written: { type: integer }
+                spilled:
+                  type: integer
+                  description: Records written to the disk write-ahead log under backpressure.
+                replayed: { type: integer }
+                dropped: { type: integer }
+                rejected: { type: integer }
+        crypto:
+          type: object
+          properties:
+            heavy_permits_available:
+              type: integer
+              description: Free slots in the Argon2 and RSA concurrency budget.
+        revocation_epoch:
+          type: integer
+          description: |
+            Incremented by every security-sensitive mutation. Each node polls it
+            and treats cached decisions stamped with an older epoch as a miss,
+            which is what makes a revocation take effect cluster-wide at once.

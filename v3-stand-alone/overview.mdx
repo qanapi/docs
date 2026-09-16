@@ -1,0 +1,174 @@
+---
+title: Overview
+description: "The Qanapi Standalone API v3 is a self-hosted cryptographic service that encrypts data within any HTTP
+request, manages the keys, and records every operation on a tamper-evident audit trail."
+---
+
+Welcome to the Qanapi Standalone API v3. It serves the same v3 contract as Qanapi Cloud from a single-tenant service you
+run yourself, so the keys, the ciphertext and the audit trail never leave your own infrastructure.
+
+<CardGroup cols={2}>
+    <Card title="Encryption" icon="lock" href="/api-reference/encryption/encrypt-payload">
+        Encrypt and decrypt named JSON fields, or a whole request body, through high-performance proxy endpoints.
+    </Card>
+    <Card title="Configurations" icon="cogs" href="/api-reference/configurations/list-configurations">
+        Manage the encryption containers that scope every key, every payload and every credential.
+    </Card>
+    <Card title="API Keys" icon="key" href="/api-reference/api-keys/list-api-keys">
+        Create, rotate, revoke and scope the machine credentials your applications use.
+    </Card>
+    <Card title="Key Management Service" icon="tags" href="/api-reference/kms/list-kms-keys">
+        Create and maintain public/private key pairs for secure data encryption.
+    </Card>
+    <Card title="Health" icon="heart-pulse" href="/api-reference/health/liveness-probe">
+        Get real-time insight into the health of your Qanapi environment.
+    </Card>
+    <Card title="Audit Logs" icon="list" href="/api-reference/audit/get-audit-logs">
+        Query, verify and export a hash-chained record of everything the service did.
+    </Card>
+</CardGroup>
+
+## Authentication
+
+Two credentials reach the same identity. A machine caller passes an API key in the `X-Qanapi-Authorization` header. A
+person working through a console exchanges credentials at `POST /api/v3/auth/login` for a bearer token and passes it in
+`Authorization`.  When a request carries both, the API key takes precedence because a key names a narrower credential
+than the user that owns it.
+
+<Warning>
+    Keys issued by this service are prefixed `qk_`, not the `qapi_` used by Qanapi Cloud. Update any secret scanning
+    rule or client-side validation that matches on the cloud prefix, or it will fail to recognize a standalone key.
+</Warning>
+
+```bash
+curl -H "X-Qanapi-Authorization: qk_your_api_key_here" \
+     https://qanapi.example.com/api/v3/users/me
+```
+
+<Tip>
+    Only the SHA-256 hash of a key is stored, so a key is displayed exactly once, when it is created or rotated. No
+    endpoint will return it to you afterward, because there is nothing left to return.
+</Tip>
+
+### Status codes for credential failures
+
+These are worth stating plainly, because clients branch on them and they are not what most readers would predict.
+
+| Situation                            | Status |
+|--------------------------------------|--------|
+| No credential presented at all       | `400`  |
+| A credential that does not verify    | `401`  |
+| A revoked API key                    | `403`  |
+| Authenticated but not permitted      | `403`  |
+| Request body or parameter is invalid | `422`  |
+
+Every error body carries `message` and `error`. Validation failures additionally carry a field-keyed `errors` object.
+
+## Base URL
+
+This service is single-tenant and self-hosted, so there is no customer subdomain. The base URL is whichever host you
+deployed it behind.
+
+<CodeGroup>
+    ```bash Deployed
+    https://qanapi.example.com/api/v3
+    ```
+    ```bash Local Compose cluster
+    http://localhost:8000/api/v3
+    ```
+</CodeGroup>
+
+<Note>
+    `GET /health/live` and `GET /health/ready` are registered outside authentication, so an orchestrator can probe them
+    without holding a credential.
+</Note>
+
+## Core Components
+### Configurations
+
+A configuration, known internally as a container, is the unit that everything else hangs from. It owns a master key, and
+every payload encrypted through it derives a fresh key encryption key and data encryption key from that master. Nonce
+is therefore never reused under a key, no matter how much traffic passes through one configuration.  An API key reaches
+only the configurations it is linked to, through `PUT /api/v3/api-keys/{id}/configurations`. A key linked to nothing
+reaches nothing.
+
+<Tip>
+    The `proxy_slug` that appears in every encryption URL is generated as sixteen random characters. Deriving it from
+    the configuration name would make the URL of every encryption call guessable from that name.
+</Tip>
+
+### Classifications and Policies
+
+A classification is a sensitivity label attached at encryption time. Decrypting that payload then requires the caller to
+hold clearance for the label, resolved through the user that owns the API key.  Policies bind a principal to allowed or
+denied actions on resources and are evaluated on every request.
+
+### Key Management
+
+The KMS holds keys for your own use, kept separate from the keys the encryption endpoints manage internally. It supports
+creation, import, export, rotation, revocation and restoration.
+
+### Transport Encryption
+
+When the boundary that terminates TLS in front of the service should not be able to read your plaintext either, fetch
+`GET /api/v3/qanapi-public-key` and wrap the request body as an RFC 7516 JWE. The service unwraps it before anything
+else inspects it, and will wrap its answer back to a key of yours on request.
+
+### Observability
+
+Keep a full record of everything happening in your environment.
+
+- **Audit Logs**: A hash-chained record of every operation the service performed.
+- **Chain Verification**: `GET /api/v3/audit-logs/verify` walks the chain and reports whether it remains intact.
+- **Export**: `POST /api/v3/audit-logs/export` produces the record for an external system.
+
+<Warning>
+    Monitor your audit trail for `403` responses. On this service a `403` means either a revoked API key or a principal
+    that authenticated successfully but lacked the clearance or policy for what it requested. Those are different
+    problems, and the error body distinguishes them.
+</Warning>
+
+## The Ciphertext Envelope
+
+Encrypted values are returned as an opaque four-segment string.
+
+```
+QANAPI-RS:v1:<base64 key id>:
+<base64 ciphertext>:$
+```
+
+The AEAD nonce and the authentication tag are deliberately absent from it. Both live on the key record that the key
+identifier names, so an exfiltrated column of ciphertext is not by itself enough to attempt decryption.
+
+<Warning>
+    Ciphertext written by Qanapi Cloud begins `qanapi:` and this service will not read it. The service answers `400`
+    rather than attempting a decryption that would fail. There is no in-place migration: moving existing data means
+    decrypting it through the cloud API and re-encrypting it here.
+</Warning>
+
+## Limits
+
+Requests are rate limited per client address per node, sixty a minute by default, and every response carries
+`X-RateLimit-Limit` and `X-RateLimit-Remaining`. Exceeding the budget answers `429`. Because the window is kept per
+node, a cluster of n nodes admits n times that figure. Impose a cluster-wide number at the reverse proxy.
+`POST /api/v3/auth/login` carries a separate and stricter budget of ten a minute, because it requires no credential
+to reach and each attempt costs full password verification.
+
+<Tip>
+    A successful login clears that budget immediately, so the stricter limit falls on failed attempts rather than on
+    legitimate sign-ins. A caller who proves who they are does not spend an allowance intended for guessers.
+</Tip>
+
+Request bodies are capped at 10 MB by default, which answers `413`. A request that has not completed within sixty
+seconds answers `504`.
+
+## Next Steps
+
+<CardGroup cols={2}>
+    <Card title="API Reference" icon="code" href="/api-reference/encryption/encrypt-payload">
+        Explore the full technical specification for all 55 operations.
+    </Card>
+    <Card title="Get Stand Alone for your company" icon="cart-shopping" href="mailto:sales@qanapi.com">
+        If this looks like a good fit for you, get in touch with us!
+    </Card>
+</CardGroup>
