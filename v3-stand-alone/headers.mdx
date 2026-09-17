@@ -1,42 +1,95 @@
 ---
 title: Custom Headers
-description: "Unique headers used in API v3 to control authentication, data selection, and request routing."
+description: "The headers this service reads and returns, covering authentication, field selection, classification,
+forwarding and end-to-end encryption."
 ---
 
-# Authentication Header
+Every header below is optional unless it is marked required. Anything not listed here is passed through untouched.
 
-<ParamField header="X-Qanapi-Authorization" type="string" required>
-    Your unique API key. All v3 API keys are prefixed with `qapi_`.
+# Authentication
+
+Send one of these two. A request carrying both is authenticated as the API key, because a key names a narrower
+credential than the user that owns it.
+
+<ParamField header="X-Qanapi-Authorization" type="string">
+    An API key. Keys issued by this service are prefixed `qk_`.
 </ParamField>
 
+<ParamField header="Authorization" type="string">
+    A bearer token from `POST /api/v3/auth/login`, sent as `Bearer <token>`. An API key is also accepted here, as
+    `Bearer qk_...`, and is recognised by its prefix.
+</ParamField>
+
+<Warning>
+    Keys issued by this service use the `qk_` prefix, not the `qapi_` used by Qanapi Cloud. Update any secret scanning
+    rule or client-side validation that matches on the cloud prefix, or it will fail to recognize a standalone key.
+</Warning>
+
 <Tip>
-    You can manage and rotate your API keys in the [API Keys section](/api-reference/list-api-keys).
+    You can create, rotate and revoke keys in the [API Keys section](/api-reference/api-keys/list-api-keys).
 </Tip>
 
 # Content Control
 
-<ParamField header="Content-Type" type="string" required>
-    Must be set to `application/json` for all requests containing a JSON payload.
+<ParamField header="Content-Type" type="string">
+    Required, and `application/json`, on the management endpoints: users, API keys, configurations, classifications,
+    policies, KMS and audit export. A JSON body sent without it is rejected there.
+
+    The two encryption endpoints do not require it. They read the body directly, so field mode accepts JSON under any
+    content type and whole-body mode accepts any bytes at all.
+
+    Use `application/jose` when the body is an encrypted JWE. See [Transport Encryption](#transport-encryption).
 </ParamField>
 
 <ParamField header="X-Qanapi-Fields" type="string">
-    A comma-separated list of fields in the JSON payload to be processed (encrypted or decrypted).
+    A comma-separated list of fields in the JSON payload to encrypt or decrypt. Everything not named is returned
+    untouched.
 
     <Info>
-        This header is **required** for encryption and decryption requests. For other API calls, it can be omitted.
+        Not required. Omitting it on an encryption call encrypts nothing, unless you selected whole-body mode with
+        `X-Qanapi-Full-Body`.
     </Info>
 
-    **Dot Notation:** You can use dot notation to target nested fields within multi-dimensional objects.
+    **Dot notation:** target nested fields by path, for example `user.address.zip`.
+
+    **Arrays:** a numeric segment indexes one element, so `items.0.card` reaches exactly that one. A segment that is
+    not a number is mapped over every element instead, so `items.card` reaches the `card` of every object in `items`.
+    Naming an array itself encrypts it whole, as a single value.
+
+    A path that matches nothing in the payload is skipped rather than reported, unless you send
+    `X-Qanapi-Require-Fields`.
 </ParamField>
+
+<ParamField header="X-Qanapi-Full-Body" type="string">
+    Treat the whole body as one payload rather than selecting fields from it. Any of `true`, `1`, `yes` or `on` turns
+    it on.
+
+    Encrypting this way returns a single envelope as `text/plain`, whatever the body was. Decrypting returns the
+    original bytes under a content type inferred from them.
+</ParamField>
+
+<ParamField header="X-Qanapi-Mode" type="string">
+    An alternative spelling of whole-body mode. Send `full_body` or `full-body`; any other value leaves field mode in
+    effect.
+</ParamField>
+
+<ParamField header="X-Qanapi-Require-Fields" type="string">
+    Fail the request when a named field path matched nothing, rather than returning the body unchanged. Any of `true`,
+    `1`, `yes` or `on` turns it on, and nothing is changed when a request fails this way.
+</ParamField>
+
+<Warning>
+    Without `X-Qanapi-Require-Fields`, a mistyped path is indistinguishable from a successful call: the response is
+    your own plaintext, returned with a success status. Set this header in any client that would rather hear about a
+    typo than store plaintext believing it is ciphertext.
+</Warning>
 
 ## Dot Notation Example
 
-When working with nested JSON structures, use the `X-Qanapi-Fields` header to specify exactly which fields should be
-touched.
-
 ```bash Request
-curl -X POST https://{subdomain}.qanapi.cloud/api/v3/encryption/{proxy}/encrypt \
-  -H "X-Qanapi-Authorization: qapi_..." \
+curl -X POST https://qanapi.example.com/api/v3/encryption/{proxy}/encrypt \
+  -H "X-Qanapi-Authorization: qk_..." \
+  -H "Content-Type: application/json" \
   -H "X-Qanapi-Fields: user.email, user.address.zip" \
   -d '{
     "user": {
@@ -53,25 +106,92 @@ curl -X POST https://{subdomain}.qanapi.cloud/api/v3/encryption/{proxy}/encrypt 
 # Classifications
 
 <ParamField header="X-Qanapi-Classification" type="string">
-    The ID or slug of a classification to assign to the encrypted data.
+    The id or slug of a classification to attach to the data being encrypted.
 </ParamField>
 
-If you use this header with an encryption request, the key(s) it generates will be tagged with that classification.
-This means that if any other user or api key tries to decrypt the data, they MUST have access to the classification.
-If they do not, they will not be able to decrypt the data.  This adds an extra layer of security on the data you encrypt
-through our system.
+Any key generated for that request is tagged with the classification, so every later decryption of that data requires
+the caller to hold clearance for it. A caller without clearance cannot read it back.
+
+<Note>
+    This header applies to encryption only. Decryption reads the classification from the record itself, so sending it
+    on a decrypt call has no effect. Applying a classification you do not hold yourself is refused, because it would
+    let you write data you immediately could not read.
+</Note>
 
 # Advanced Routing
 
 <ParamField header="X-Qanapi-Destination" type="string">
-    A URL to forward the request to after processing. If provided, Qanapi will act as a transparent proxy.
+    An absolute `http` or `https` URL to forward the processed payload to. The destination's answer is relayed back to
+    you with its own status, body and headers.
 </ParamField>
 
 <Warning>
-    When using `X-Qanapi-Destination`, all non-Qanapi headers (e.g., `Authorization`, `Custom-App-Header`) will be
-    forwarded to the destination URL along with the processed payload.
+    Your credentials are never forwarded. Every header beginning `x-qanapi-` is stripped, and so is `Authorization`,
+    along with the hop-by-hop headers. No destination receives the credential you used with us, so a destination that
+    needs its own must be given it another way.
 </Warning>
 
-<Card title="Try it out" icon="vial" href="/v3/encryption/{proxy}/encrypt">
+<Note>
+    Where the installation configures an allowlist of destination hosts, a URL outside it is refused.
+</Note>
+
+# Transport Encryption
+
+For payloads that must stay unreadable even to the boundary terminating TLS in front of the service.
+
+<ParamField header="Content-Type" type="string">
+    Set to `application/jose` to send the body as an RFC 7516 JWE, wrapped to the key from
+    `GET /api/v3/qanapi-public-key`. `application/jwt` and `application/jose+json` are accepted as well, and a body
+    that is plainly a compact JWE is recognised even without one of them.
+</ParamField>
+
+<ParamField header="X-Qanapi-Wrap-With-Key-Id" type="string">
+    The `key_id` of an RSA key in your KMS. The response is wrapped to it as a compact JWE and returned as
+    `application/jose`, so only the holder of that key's private half can read it. The spelling `wrap_with_key_id` is
+    accepted as well.
+</ParamField>
+
+<Note>
+    Both work on any `/api/v3` endpoint, not only the encryption ones. Where the installation requires it, a wrapped
+    request must carry `iat`, `exp` and `jti` claims, which also make each payload single-use.
+</Note>
+
+# Tracing
+
+<ParamField header="X-Request-Id" type="string">
+    Your own correlation id, preserved on the audit record and echoed on the response. It must be at most 64 characters
+    of letters, digits, `-`, `_`, `.` or `:`; anything else is replaced with a generated id. Omit it and one is
+    generated for you.
+</ParamField>
+
+# Response Headers
+
+<ParamField header="X-Qanapi-Action-Count" type="integer">
+    How many cryptographic operations the request performed. A zero in field mode means no named path matched anything.
+</ParamField>
+
+<ParamField header="X-Qanapi-Forwarded-To" type="string">
+    Present only when the answer was relayed from an `X-Qanapi-Destination`, naming it, so you can tell a proxied
+    response from one this service produced.
+</ParamField>
+
+<ParamField header="X-RateLimit-Limit" type="integer">
+    Requests allowed per minute, per node.
+</ParamField>
+
+<ParamField header="X-RateLimit-Remaining" type="integer">
+    Requests left in the current window.
+</ParamField>
+
+<ParamField header="X-Qanapi-Audit-Records" type="integer">
+    On an audit export, how many records the export contains.
+</ParamField>
+
+<ParamField header="X-Qanapi-Audit-Chain-Verified" type="string">
+    On an audit export, whether the hash chain over the exported records verified. A `false` here is a compliance event
+    in its own right, and the export is still returned so it can be examined.
+</ParamField>
+
+<Card title="Try it out" icon="vial" href="/api-reference/encryption/encrypt-payload">
     See these headers in action by testing the Encryption endpoints.
 </Card>

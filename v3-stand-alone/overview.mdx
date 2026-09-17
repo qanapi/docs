@@ -12,7 +12,7 @@ run yourself, so the keys, the ciphertext and the audit trail never leave your o
         Encrypt and decrypt named JSON fields, or a whole request body, through high-performance proxy endpoints.
     </Card>
     <Card title="Configurations" icon="cogs" href="/api-reference/configurations/list-configurations">
-        Manage the encryption containers that scope every key, every payload and every credential.
+        Manage the encryption configurations that scope every key, every payload and every credential.
     </Card>
     <Card title="API Keys" icon="key" href="/api-reference/api-keys/list-api-keys">
         Create, rotate, revoke and scope the machine credentials your applications use.
@@ -50,17 +50,7 @@ curl -H "X-Qanapi-Authorization: qk_your_api_key_here" \
     endpoint will return it to you afterward, because there is nothing left to return.
 </Tip>
 
-### Status codes for credential failures
-
-These are worth stating plainly, because clients branch on them and they are not what most readers would predict.
-
-| Situation                            | Status |
-|--------------------------------------|--------|
-| No credential presented at all       | `400`  |
-| A credential that does not verify    | `401`  |
-| A revoked API key                    | `403`  |
-| Authenticated but not permitted      | `403`  |
-| Request body or parameter is invalid | `422`  |
+### Error bodies
 
 Every error body carries `message` and `error`. Validation failures additionally carry a field-keyed `errors` object.
 
@@ -73,7 +63,7 @@ deployed it behind.
     ```bash Deployed
     https://qanapi.example.com/api/v3
     ```
-    ```bash Local Compose cluster
+    ```bash Local deployment
     http://localhost:8000/api/v3
     ```
 </CodeGroup>
@@ -86,11 +76,10 @@ deployed it behind.
 ## Core Components
 ### Configurations
 
-A configuration, known internally as a container, is the unit that everything else hangs from. It owns a master key, and
-every payload encrypted through it derives a fresh key encryption key and data encryption key from that master. Nonce
-is therefore never reused under a key, no matter how much traffic passes through one configuration.  An API key reaches
-only the configurations it is linked to, through `PUT /api/v3/api-keys/{id}/configurations`. A key linked to nothing
-reaches nothing.
+A configuration is the unit that everything else hangs from. It owns a master key, and every payload encrypted through
+it derives a fresh key encryption key and data encryption key from that master. A nonce is therefore never reused under
+a key, no matter how much traffic passes through one configuration.  An API key reaches only the configurations it is
+linked to, through `PUT /api/v3/api-keys/{id}/configurations`. A key linked to nothing reaches nothing.
 
 <Tip>
     The `proxy_slug` that appears in every encryption URL is generated as sixteen random characters. Deriving it from
@@ -133,8 +122,7 @@ Keep a full record of everything happening in your environment.
 Encrypted values are returned as an opaque four-segment string.
 
 ```
-QANAPI-RS:v1:<base64 key id>:
-<base64 ciphertext>:$
+QANAPI-RS:v1:<base64 key id>:<base64 ciphertext>:$
 ```
 
 The AEAD nonce and the authentication tag are deliberately absent from it. Both live on the key record that the key
@@ -166,7 +154,7 @@ seconds answers `504`.
 
 <CardGroup cols={2}>
     <Card title="API Reference" icon="code" href="/api-reference/encryption/encrypt-payload">
-        Explore the full technical specification for all 55 operations.
+        Explore the full technical specification for all 52 operations.
     </Card>
     <Card title="Get Stand Alone for your company" icon="cart-shopping" href="mailto:sales@qanapi.com">
         If this looks like a good fit for you, get in touch with us!

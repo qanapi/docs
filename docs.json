@@ -197,8 +197,7 @@
                 "group": "Authentication",
                 "openapi": "openapi/stand-alone/v3.yaml",
                 "pages": [
-                  "POST /api/v3/auth/login",
-                  "POST /api/v3/auth/register"
+                  "POST /api/v3/auth/login"
                 ]
               },
               {
@@ -271,8 +270,7 @@
                 "group": "Transport",
                 "openapi": "openapi/stand-alone/v3.yaml",
                 "pages": [
-                  "GET /api/v3/qanapi-public-key",
-                  "POST /api/v3/qanapi-public-key/rotate"
+                  "GET /api/v3/qanapi-public-key"
                 ]
               }
             ]
