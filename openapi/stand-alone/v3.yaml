@@ -159,7 +159,12 @@ paths:
                     type: string
                     description: Which cluster node answered.
                     examples: [node-01]
-                  version: { type: string, examples: ['1.0.1'] }
+                  version: { type: string, examples: ['1.0.5'] }
+              example: {
+                "status": "ok",
+                "instance_id": "node-01",
+                "version": "1.0.5"
+              }
 
   /health/ready:
     get:
@@ -179,15 +184,95 @@ paths:
       security: []
       responses:
         '200':
-          description: Ready for traffic.
+          description: |
+            Ready for traffic: the database pool answered. With
+            `EXPOSE_HEALTH_DETAIL` off, which is the production setting, the
+            body is only `{"status": "ready"}`.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Readiness' }
+              schema:
+                $ref: '#/components/schemas/Readiness'
+              example: {
+                "status": "ready",
+                "instance_id": "node-01",
+                "database": true,
+                "fips": {
+                  "build": true,
+                  "active": true
+                },
+                "audit": {
+                  "queue_depth": 0,
+                  "metrics": {
+                    "enqueued": 48213,
+                    "written": 48213,
+                    "spilled": 0,
+                    "replayed": 0,
+                    "dropped": 0,
+                    "rejected": 0
+                  }
+                },
+                "crypto": {
+                  "heavy_permits_available": 6
+                },
+                "license": {
+                  "status": "active",
+                  "source": "database",
+                  "licensee": "Acme Corporation",
+                  "license_id": "QL-2026-0117",
+                  "issued_at": "2026-01-17T00:00:00Z",
+                  "expires_at": "2027-01-17T00:00:00Z",
+                  "features": [],
+                  "key_fingerprint": "84fb58327c37",
+                  "expiring_soon": false
+                },
+                "revocation_epoch": 17
+              }
         '503':
-          description: Not ready; the database pool is unreachable.
+          description: |
+            Not ready. The body is the same shape as the `200`, with `status`
+            reading `unavailable` and `database` false; the status code is what
+            a load balancer acts on. Reached only when the database pool is
+            unreachable: FIPS state and audit queue depth are reported here but
+            never fail the probe.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Readiness' }
+              schema:
+                $ref: '#/components/schemas/Readiness'
+              example: {
+                "status": "unavailable",
+                "instance_id": "node-01",
+                "database": false,
+                "fips": {
+                  "build": true,
+                  "active": true
+                },
+                "audit": {
+                  "queue_depth": 412,
+                  "metrics": {
+                    "enqueued": 48625,
+                    "written": 48213,
+                    "spilled": 0,
+                    "replayed": 0,
+                    "dropped": 0,
+                    "rejected": 0
+                  }
+                },
+                "crypto": {
+                  "heavy_permits_available": 6
+                },
+                "license": {
+                  "status": "active",
+                  "source": "database",
+                  "licensee": "Acme Corporation",
+                  "license_id": "QL-2026-0117",
+                  "issued_at": "2026-01-17T00:00:00Z",
+                  "expires_at": "2027-01-17T00:00:00Z",
+                  "features": [],
+                  "key_fingerprint": "84fb58327c37",
+                  "expiring_soon": false
+                },
+                "revocation_epoch": 17
+              }
 
   # --------------------------------------------------------- authentication
 
@@ -212,22 +297,44 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/LoginRequest' }
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example: {
+              "email": "ada@example.com",
+              "password": "correct horse battery staple"
+            }
       responses:
         '200':
           description: Authenticated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/LoginResponse' }
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              example: {
+                "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzZjFhOGM0Mi02ZDliLTRlMDciLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3OTUxNzYwMDB9.Kk1n3XqZg9pQ2sVbN4mHtuY7cR1oLAw",
+                "token_type": "Bearer",
+                "expires_in": 3600,
+                "user": {
+                  "id": "3f1a8c42-6d9b-4e07-9a55-2b8c1d0e7f31",
+                  "email": "ada@example.com",
+                  "name": "Ada Lovelace",
+                  "role": "admin",
+                  "created_at": "2026-03-14T09:21:07Z",
+                  "updated_at": "2026-09-02T16:48:33Z"
+                }
+              }
         '401':
           description: |
             The email or the password was wrong. Which one is deliberately not
             distinguished, and both cases cost the same amount of time.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
 
   # ------------------------------------------------------------------ users
 
@@ -246,10 +353,32 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/User' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+                items:
+                  $ref: '#/components/schemas/User'
+              example: [
+                {
+                  "id": "3f1a8c42-6d9b-4e07-9a55-2b8c1d0e7f31",
+                  "email": "ada@example.com",
+                  "name": "Ada Lovelace",
+                  "role": "admin",
+                  "created_at": "2026-03-14T09:21:07Z",
+                  "updated_at": "2026-09-02T16:48:33Z"
+                },
+                {
+                  "id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                  "email": "grace@example.com",
+                  "name": "Grace Hopper",
+                  "role": "user",
+                  "created_at": "2026-05-06T11:02:44Z",
+                  "updated_at": "2026-05-06T11:02:44Z"
+                }
+              ]
+        '400':
+                  $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       tags: [STAND Users]
       summary: Create a user
@@ -262,27 +391,48 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateUserRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+            example: {
+              "email": "grace@example.com",
+              "password": "correct horse battery staple",
+              "name": "Grace Hopper",
+              "role": "user"
+            }
       responses:
-        '200':
+        '201':
           description: The new user.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/User' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+              schema:
+                $ref: '#/components/schemas/User'
+              example: {
+                "id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "email": "grace@example.com",
+                "name": "Grace Hopper",
+                "role": "user",
+                "created_at": "2026-05-06T11:02:44Z",
+                "updated_at": "2026-05-06T11:02:44Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '409':
           description: That email address is already registered.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
 
   /api/v3/users/me:
     get:
       tags: [STAND Users]
-      summary: The authenticated user
+      summary: The current user
       description: |
         For an API key this is the user that owns the key, which is the identity
         its classification clearance resolves through.
@@ -292,14 +442,26 @@ paths:
           description: The caller.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/User' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+              schema:
+                $ref: '#/components/schemas/User'
+              example: {
+                "id": "3f1a8c42-6d9b-4e07-9a55-2b8c1d0e7f31",
+                "email": "ada@example.com",
+                "name": "Ada Lovelace",
+                "role": "admin",
+                "created_at": "2026-03-14T09:21:07Z",
+                "updated_at": "2026-09-02T16:48:33Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '404':
           description: The credential resolves to no user account.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/v3/users/{id}:
     parameters:
@@ -316,11 +478,24 @@ paths:
           description: The user.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/User' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/User'
+              example: {
+                "id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "email": "grace@example.com",
+                "name": "Grace Hopper",
+                "role": "user",
+                "created_at": "2026-05-06T11:02:44Z",
+                "updated_at": "2026-05-06T11:02:44Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     patch:
       tags: [STAND Users]
       summary: Update a user
@@ -343,28 +518,47 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateUserRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            example: {
+              "name": "Grace B. Hopper",
+              "role": "admin"
+            }
       responses:
         '200':
           description: Updated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/User' }
-        '400': { $ref: '#/components/responses/NoCredential' }
+              schema:
+                $ref: '#/components/schemas/User'
+              example: {
+                "id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "email": "grace@example.com",
+                "name": "Grace B. Hopper",
+                "role": "admin",
+                "created_at": "2026-05-06T11:02:44Z",
+                "updated_at": "2026-09-17T10:04:11Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
         '401':
           description: |
             The credential did not verify, or `current_password` did not match
             the account it was presented for.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: That email address is already registered to another account.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
           description: |
             The body is invalid, `current_password` was required and not given,
@@ -372,7 +566,8 @@ paths:
             tried to change their own role.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
     put:
       tags: [STAND Users]
       summary: Update a user
@@ -384,29 +579,50 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateUserRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+            example: {
+              "email": "grace.hopper@example.com",
+              "password": "a new and sufficiently long password",
+              "current_password": "correct horse battery staple"
+            }
       responses:
         '200':
           description: Updated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/User' }
-        '400': { $ref: '#/components/responses/NoCredential' }
+              schema:
+                $ref: '#/components/schemas/User'
+              example: {
+                "id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "email": "grace.hopper@example.com",
+                "name": "Grace Hopper",
+                "role": "user",
+                "created_at": "2026-05-06T11:02:44Z",
+                "updated_at": "2026-09-17T10:06:52Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
         '401':
           description: |
             The credential did not verify, or `current_password` did not match
             the account it was presented for.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: That email address is already registered to another account.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
     delete:
       tags: [STAND Users]
       summary: Delete a user
@@ -417,16 +633,21 @@ paths:
       operationId: deleteUser
       responses:
         '204': { description: Deleted. No body. }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '422':
           description: |
             The caller named their own account, or the last administrator.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   # -------------------------------------------------------------- api keys
 
@@ -445,9 +666,30 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/ApiKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+              example: [
+                {
+                  "id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                  "user_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                  "name": "Billing service",
+                  "prefix": "qk_Q8oGyqBl3",
+                  "revoked_at": null,
+                  "last_used_at": "2026-09-17T08:14:02Z",
+                  "created_at": "2026-06-01T13:45:10Z",
+                  "configurations": [
+                    {
+                      "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                      "name": "Customer records",
+                      "proxy_slug": "952zpx6vyig3sdyp"
+                    }
+                  ]
+                }
+              ]
+        '400':
+                      $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
     post:
       tags: [STAND API keys]
       summary: Mint an API key
@@ -464,23 +706,53 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateApiKeyRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+            example: {
+              "name": "Billing service",
+              "user_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+              "configuration_ids": [
+                "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57"
+              ]
+            }
       responses:
         '201':
           description: Created. This is the only time `key` is returned.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ApiKeyWithSecret' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+              schema:
+                $ref: '#/components/schemas/ApiKeyWithSecret'
+              example: {
+                "id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                "user_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "name": "Billing service",
+                "prefix": "qk_Q8oGyqBl3",
+                "revoked_at": null,
+                "last_used_at": null,
+                "created_at": "2026-06-01T13:45:10Z",
+                "configurations": [
+                  {
+                    "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                    "name": "Customer records",
+                    "proxy_slug": "952zpx6vyig3sdyp"
+                  }
+                ],
+                "key": "qk_Q8oGyqBl3Icos_EYb8pitlJvMRHrsjUwUpfwoN7f9PKBINZ9-kBM"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '422':
           description: |
             The body is invalid, `name` is empty, the named owner does not
             exist, or the credential names no user to own the key.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   /api/v3/api-keys/{id}:
     parameters:
@@ -498,10 +770,30 @@ paths:
           description: The key, with its configurations and without its secret.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ApiKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '404': { $ref: '#/components/responses/NotFoundOrNotYours' }
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+              example: {
+                "id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                "user_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "name": "Billing service",
+                "prefix": "qk_Q8oGyqBl3",
+                "revoked_at": null,
+                "last_used_at": "2026-09-17T08:14:02Z",
+                "created_at": "2026-06-01T13:45:10Z",
+                "configurations": [
+                  {
+                    "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                    "name": "Customer records",
+                    "proxy_slug": "952zpx6vyig3sdyp"
+                  }
+                ]
+              }
+        '400':
+                    $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '404':
+          $ref: '#/components/responses/NotFoundOrNotYours'
     delete:
       tags: [STAND API keys]
       summary: Delete an API key
@@ -511,9 +803,12 @@ paths:
       operationId: deleteApiKey
       responses:
         '204': { description: Deleted. No body. }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '404': { $ref: '#/components/responses/NotFoundOrNotYours' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '404':
+          $ref: '#/components/responses/NotFoundOrNotYours'
 
   /api/v3/api-keys/{id}/rotate:
     parameters:
@@ -535,15 +830,30 @@ paths:
           description: Rotated. The new plaintext is returned once.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ApiKeyWithSecret' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+              schema:
+                $ref: '#/components/schemas/ApiKeyWithSecret'
+              example: {
+                "id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                "user_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "name": "Billing service",
+                "prefix": "qk_7mTxD2pQs",
+                "revoked_at": null,
+                "last_used_at": null,
+                "created_at": "2026-06-01T13:45:10Z",
+                "key": "qk_7mTxD2pQsRbYh1fKj9wEuNc6ZaLvG4XoI8PdM0TnS5rAqB3yCWkF"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '403':
           description: The key has been revoked, so there is nothing to rotate.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '404': { $ref: '#/components/responses/NotFoundOrNotYours' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFoundOrNotYours'
 
   /api/v3/api-keys/{id}/revoke:
     parameters:
@@ -558,14 +868,18 @@ paths:
       operationId: revokeApiKey
       responses:
         '204': { description: Revoked. No body. }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '403':
           description: The key was already revoked.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '404': { $ref: '#/components/responses/NotFoundOrNotYours' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFoundOrNotYours'
 
   /api/v3/api-keys/{id}/configurations:
     parameters:
@@ -586,24 +900,58 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SetApiKeyConfigurationsRequest' }
+            schema:
+              $ref: '#/components/schemas/SetApiKeyConfigurationsRequest'
+            example: {
+              "configuration_ids": [
+                "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                "e30a7d65-1b48-4c92-85f3-c7b2091a4d68"
+              ]
+            }
       responses:
         '200':
           description: The key, with its new configuration set.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ApiKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+              example: {
+                "id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                "user_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "name": "Billing service",
+                "prefix": "qk_Q8oGyqBl3",
+                "revoked_at": null,
+                "last_used_at": "2026-09-17T08:14:02Z",
+                "created_at": "2026-06-01T13:45:10Z",
+                "configurations": [
+                  {
+                    "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                    "name": "Customer records",
+                    "proxy_slug": "952zpx6vyig3sdyp"
+                  },
+                  {
+                    "id": "e30a7d65-1b48-4c92-85f3-c7b2091a4d68",
+                    "name": "Payment tokens",
+                    "proxy_slug": "h4k2m9qv7t1bz8xr"
+                  }
+                ]
+              }
+        '400':
+                    $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: |
             Concurrent writes to the same key could not be serialised. The write
             is sound; retry it.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
           description: |
             The body is invalid, or one of the `configuration_ids` names no
@@ -611,7 +959,8 @@ paths:
             `errors.configuration_ids`, and nothing was written.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
     patch:
       tags: [STAND API keys]
       summary: Set the configurations a key may reach
@@ -621,25 +970,54 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/SetApiKeyConfigurationsRequest' }
+            schema:
+              $ref: '#/components/schemas/SetApiKeyConfigurationsRequest'
+            example: {
+              "configuration_ids": [
+                "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57"
+              ]
+            }
       responses:
         '200':
           description: The key, with its new configuration set.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ApiKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+              example: {
+                "id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                "user_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                "name": "Billing service",
+                "prefix": "qk_Q8oGyqBl3",
+                "revoked_at": null,
+                "last_used_at": "2026-09-17T08:14:02Z",
+                "created_at": "2026-06-01T13:45:10Z",
+                "configurations": [
+                  {
+                    "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                    "name": "Customer records",
+                    "proxy_slug": "952zpx6vyig3sdyp"
+                  }
+                ]
+              }
+        '400':
+                    $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: |
             Concurrent writes to the same key could not be serialised. The write
             is sound; retry it.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
 
   # -------------------------------------------------------- configurations
 
@@ -658,10 +1036,36 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Configuration' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+                items:
+                  $ref: '#/components/schemas/Configuration'
+              example: [
+                {
+                  "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                  "name": "Customer records",
+                  "proxy_slug": "952zpx6vyig3sdyp",
+                  "algorithm": "aes-256-gcm",
+                  "mek_provider": "local_aek",
+                  "mek_reference": null,
+                  "created_at": "2026-03-14T09:24:18Z",
+                  "updated_at": "2026-03-14T09:24:18Z"
+                },
+                {
+                  "id": "e30a7d65-1b48-4c92-85f3-c7b2091a4d68",
+                  "name": "Payment tokens",
+                  "proxy_slug": "h4k2m9qv7t1bz8xr",
+                  "algorithm": "aes-256-gcm",
+                  "mek_provider": "local_aek",
+                  "mek_reference": null,
+                  "created_at": "2026-04-20T15:07:52Z",
+                  "updated_at": "2026-04-20T15:07:52Z"
+                }
+              ]
+        '400':
+                  $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       tags: [STAND Configurations]
       summary: Create a configuration
@@ -679,28 +1083,48 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateConfigurationRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateConfigurationRequest'
+            example: {
+              "name": "Customer records"
+            }
       responses:
-        '200':
+        '201':
           description: The new configuration.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Configuration' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+              schema:
+                $ref: '#/components/schemas/Configuration'
+              example: {
+                "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                "name": "Customer records",
+                "proxy_slug": "952zpx6vyig3sdyp",
+                "algorithm": "aes-256-gcm",
+                "mek_provider": "local_aek",
+                "mek_reference": null,
+                "created_at": "2026-03-14T09:24:18Z",
+                "updated_at": "2026-03-14T09:24:18Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '409':
           description: Another configuration already uses this name or proxy slug.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
           description: |
             `name` is empty, or the supplied `proxy_slug` contains no usable
             characters.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   /api/v3/configurations/{id}:
     parameters:
@@ -715,11 +1139,26 @@ paths:
           description: The configuration.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Configuration' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Configuration'
+              example: {
+                "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                "name": "Customer records",
+                "proxy_slug": "952zpx6vyig3sdyp",
+                "algorithm": "aes-256-gcm",
+                "mek_provider": "local_aek",
+                "mek_reference": null,
+                "created_at": "2026-03-14T09:24:18Z",
+                "updated_at": "2026-03-14T09:24:18Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     patch:
       tags: [STAND Configurations]
       summary: Update a configuration
@@ -737,29 +1176,50 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateConfigurationRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateConfigurationRequest'
+            example: {
+              "name": "Customer records (EU)"
+            }
       responses:
         '200':
           description: Updated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Configuration' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Configuration'
+              example: {
+                "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                "name": "Customer records (EU)",
+                "proxy_slug": "952zpx6vyig3sdyp",
+                "algorithm": "aes-256-gcm",
+                "mek_provider": "local_aek",
+                "mek_reference": null,
+                "created_at": "2026-03-14T09:24:18Z",
+                "updated_at": "2026-09-17T10:15:00Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: |
             Another configuration already uses this name or proxy slug, or a
             policy statement already names the requested slug.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
         '422':
           description: The resulting name or proxy slug would be empty.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
     put:
       tags: [STAND Configurations]
       summary: Update a configuration
@@ -771,25 +1231,47 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateConfigurationRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateConfigurationRequest'
+            example: {
+              "name": "Customer records (EU)",
+              "proxy_slug": "customer-records-eu"
+            }
       responses:
         '200':
           description: Updated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Configuration' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Configuration'
+              example: {
+                "id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                "name": "Customer records (EU)",
+                "proxy_slug": "customer-records-eu",
+                "algorithm": "aes-256-gcm",
+                "mek_provider": "local_aek",
+                "mek_reference": null,
+                "created_at": "2026-03-14T09:24:18Z",
+                "updated_at": "2026-09-17T10:15:00Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: |
             Another configuration already uses this name or proxy slug, or a
             policy statement already names the requested slug.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
     delete:
       tags: [STAND Configurations]
       summary: Delete a configuration
@@ -800,10 +1282,14 @@ paths:
       operationId: deleteConfiguration
       responses:
         '204': { description: Deleted. No body. }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # ------------------------------------------------------- classifications
 
@@ -835,10 +1321,86 @@ paths:
                   properties:
                     data:
                       type: array
-                      items: { $ref: '#/components/schemas/Classification' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+                      items:
+                        $ref: '#/components/schemas/Classification'
+              example: {
+                "current_page": 1,
+                "data": [
+                  {
+                    "id": "a41d6b23-8c5f-4e91-b7d2-63a0f8c95e14",
+                    "name": "Restricted",
+                    "slug": "restricted",
+                    "description": "Customer identifiers and payment data.",
+                    "created_at": "2026-03-14T09:31:02Z",
+                    "updated_at": "2026-03-14T09:31:02Z",
+                    "users": [
+                      {
+                        "id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                        "email": "grace@example.com",
+                        "name": "Grace Hopper"
+                      }
+                    ],
+                    "roles": [
+                      {
+                        "name": "admin"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "7d2f9c58-4a16-4b83-9e07-15c3d806b2fa",
+                    "name": "Internal",
+                    "slug": "internal",
+                    "description": null,
+                    "created_at": "2026-03-14T09:33:47Z",
+                    "updated_at": "2026-03-14T09:33:47Z",
+                    "users": [],
+                    "roles": [
+                      {
+                        "name": "admin"
+                      },
+                      {
+                        "name": "user"
+                      }
+                    ]
+                  }
+                ],
+                "first_page_url": "https://qanapi.example.com/api/v3/classifications?page=1",
+                "from": 1,
+                "last_page": 1,
+                "last_page_url": "https://qanapi.example.com/api/v3/classifications?page=1",
+                "links": [
+                  {
+                    "url": null,
+                    "label": "&laquo; Previous",
+                    "page": null,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/classifications?page=1",
+                    "label": "1",
+                    "page": 1,
+                    "active": true
+                  },
+                  {
+                    "url": null,
+                    "label": "Next &raquo;",
+                    "page": null,
+                    "active": false
+                  }
+                ],
+                "next_page_url": null,
+                "path": "https://qanapi.example.com/api/v3/classifications",
+                "per_page": 15,
+                "prev_page_url": null,
+                "to": 2,
+                "total": 2
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       tags: [STAND Classifications]
       summary: Create a classification
@@ -850,22 +1412,41 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateClassificationRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateClassificationRequest'
+            example: {
+              "name": "Restricted",
+              "description": "Customer identifiers and payment data."
+            }
       responses:
-        '200':
+        '201':
           description: The new classification.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Classification' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+              schema:
+                $ref: '#/components/schemas/Classification'
+              example: {
+                "id": "a41d6b23-8c5f-4e91-b7d2-63a0f8c95e14",
+                "name": "Restricted",
+                "slug": "restricted",
+                "description": "Customer identifiers and payment data.",
+                "created_at": "2026-03-14T09:31:02Z",
+                "updated_at": "2026-03-14T09:31:02Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '409':
           description: A classification with this slug already exists.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
 
   /api/v3/classifications/{id}:
     parameters:
@@ -885,11 +1466,36 @@ paths:
           description: The classification, with its cleared principals.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Classification' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Classification'
+              example: {
+                "id": "a41d6b23-8c5f-4e91-b7d2-63a0f8c95e14",
+                "name": "Restricted",
+                "slug": "restricted",
+                "description": "Customer identifiers and payment data.",
+                "created_at": "2026-03-14T09:31:02Z",
+                "updated_at": "2026-03-14T09:31:02Z",
+                "users": [
+                  {
+                    "id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84",
+                    "email": "grace@example.com",
+                    "name": "Grace Hopper"
+                  }
+                ],
+                "roles": [
+                  {
+                    "name": "admin"
+                  }
+                ]
+              }
+        '400':
+                    $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     patch:
       tags: [STAND Classifications]
       summary: Update a classification
@@ -901,23 +1507,42 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateClassificationRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateClassificationRequest'
+            example: {
+              "description": "Customer identifiers, payment data and government ids."
+            }
       responses:
         '200':
           description: Updated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Classification' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Classification'
+              example: {
+                "id": "a41d6b23-8c5f-4e91-b7d2-63a0f8c95e14",
+                "name": "Restricted",
+                "slug": "restricted",
+                "description": "Customer identifiers, payment data and government ids.",
+                "created_at": "2026-03-14T09:31:02Z",
+                "updated_at": "2026-09-17T10:22:41Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: Another classification already uses this slug.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
     put:
       tags: [STAND Classifications]
       summary: Update a classification
@@ -927,23 +1552,44 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateClassificationRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateClassificationRequest'
+            example: {
+              "name": "Restricted",
+              "slug": "restricted",
+              "description": "Customer identifiers, payment data and government ids."
+            }
       responses:
         '200':
           description: Updated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Classification' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Classification'
+              example: {
+                "id": "a41d6b23-8c5f-4e91-b7d2-63a0f8c95e14",
+                "name": "Restricted",
+                "slug": "restricted",
+                "description": "Customer identifiers, payment data and government ids.",
+                "created_at": "2026-03-14T09:31:02Z",
+                "updated_at": "2026-09-17T10:22:41Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: Another classification already uses this slug.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
     delete:
       tags: [STAND Classifications]
       summary: Delete a classification
@@ -951,10 +1597,14 @@ paths:
       operationId: deleteClassification
       responses:
         '204': { description: Deleted. No body. }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/v3/classifications/{id}/grants:
     parameters:
@@ -973,11 +1623,26 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Grant' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+                items:
+                  $ref: '#/components/schemas/Grant'
+              example: [
+                {
+                  "principal_type": "user",
+                  "principal_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84"
+                },
+                {
+                  "principal_type": "role",
+                  "principal_id": "admin"
+                }
+              ]
+        '400':
+                  $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     post:
       tags: [STAND Classifications]
       summary: Grant clearance
@@ -989,20 +1654,30 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/Grant' }
+            schema:
+              $ref: '#/components/schemas/Grant'
+            example: {
+              "principal_type": "user",
+              "principal_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84"
+            }
       responses:
         '204': { description: Granted. No body. }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '422':
           description: |
             The body is invalid, or `principal_type` is not one of `user`,
             `api_key` or `role`.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
     delete:
       tags: [STAND Classifications]
       summary: Revoke clearance
@@ -1014,20 +1689,30 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/Grant' }
+            schema:
+              $ref: '#/components/schemas/Grant'
+            example: {
+              "principal_type": "user",
+              "principal_id": "b7c4e918-2a5d-4c63-8e10-5f9a3d2b6c84"
+            }
       responses:
         '204': { description: Revoked. No body. }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '422':
           description: |
             The body is invalid, or `principal_type` is not one of `user`,
             `api_key` or `role`.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   # --------------------------------------------------------------- policies
 
@@ -1043,7 +1728,8 @@ paths:
       - name: principal_type
         in: query
         description: Return only statements binding this kind of principal.
-        schema: { $ref: '#/components/schemas/PrincipalType' }
+        schema:
+          $ref: '#/components/schemas/PrincipalType'
       - name: principal_id
         in: query
         description: |
@@ -1057,10 +1743,47 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/Policy' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+                items:
+                  $ref: '#/components/schemas/Policy'
+              example: [
+                {
+                  "id": "d90f3a17-4b8c-42e6-95a1-7c2d5e8b0f63",
+                  "name": "Billing service encrypt and decrypt",
+                  "description": "Scoped to the customer records configuration.",
+                  "effect": "allow",
+                  "principal_type": "api_key",
+                  "principal_id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                  "actions": [
+                    "encrypt",
+                    "decrypt"
+                  ],
+                  "resources": [
+                    "configuration:952zpx6vyig3sdyp"
+                  ],
+                  "created_at": "2026-06-01T13:47:52Z"
+                },
+                {
+                  "id": "8c1b4f70-5e29-4a63-b8d5-042fa9e17c36",
+                  "name": "No export from the payments configuration",
+                  "description": null,
+                  "effect": "deny",
+                  "principal_type": "role",
+                  "principal_id": "user",
+                  "actions": [
+                    "kms:export"
+                  ],
+                  "resources": [
+                    "configuration:h4k2m9qv7t1bz8xr"
+                  ],
+                  "created_at": "2026-06-11T08:03:19Z"
+                }
+              ]
+        '400':
+                  $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       tags: [STAND Policies]
       summary: Create a policy
@@ -1080,16 +1803,51 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreatePolicyRequest' }
+            schema:
+              $ref: '#/components/schemas/CreatePolicyRequest'
+            example: {
+              "name": "Billing service encrypt and decrypt",
+              "description": "Scoped to the customer records configuration.",
+              "effect": "allow",
+              "principal_type": "api_key",
+              "principal_id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+              "actions": [
+                "encrypt",
+                "decrypt"
+              ],
+              "resources": [
+                "configuration:952zpx6vyig3sdyp"
+              ]
+            }
       responses:
         '201':
           description: Created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Policy' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+              schema:
+                $ref: '#/components/schemas/Policy'
+              example: {
+                "id": "d90f3a17-4b8c-42e6-95a1-7c2d5e8b0f63",
+                "name": "Billing service encrypt and decrypt",
+                "description": "Scoped to the customer records configuration.",
+                "effect": "allow",
+                "principal_type": "api_key",
+                "principal_id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                "actions": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "resources": [
+                  "configuration:952zpx6vyig3sdyp"
+                ],
+                "created_at": "2026-06-01T13:47:52Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '422':
           description: |
             `name` is empty, `effect` is neither `allow` nor `deny`,
@@ -1098,7 +1856,8 @@ paths:
             statement would grant, or the deny would leave policy unmanageable.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   /api/v3/policies/{id}:
     parameters:
@@ -1113,11 +1872,32 @@ paths:
           description: The policy.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Policy' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Policy'
+              example: {
+                "id": "d90f3a17-4b8c-42e6-95a1-7c2d5e8b0f63",
+                "name": "Billing service encrypt and decrypt",
+                "description": "Scoped to the customer records configuration.",
+                "effect": "allow",
+                "principal_type": "api_key",
+                "principal_id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                "actions": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "resources": [
+                  "configuration:952zpx6vyig3sdyp"
+                ],
+                "created_at": "2026-06-01T13:47:52Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     delete:
       tags: [STAND Policies]
       summary: Delete a policy
@@ -1128,10 +1908,14 @@ paths:
       operationId: deletePolicy
       responses:
         '204': { description: Deleted. No body. }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # ------------------------------------------------------------- encryption
 
@@ -1175,10 +1959,10 @@ paths:
           application/json:
             schema:
               type: object
+              additionalProperties: true
               description: |
                 Any JSON document in field mode. In whole-body mode the body may
                 be any bytes at all, including non-JSON.
-              additionalProperties: true
             example: {
               "name": "Jane Doe",
               "ssn": "123-45-6789",
@@ -1186,10 +1970,27 @@ paths:
             }
           text/plain:
             schema: { type: string }
-            example: "123-45-6789"
+            example: "The quick brown fox jumps over the lazy dog."
           application/octet-stream:
-            schema: { type: string, format: binary }
-            example: "123-45-6789"
+            schema:
+              type: string
+              format: binary
+              description: |
+                Raw bytes of any kind, for whole-body mode. Send this content
+                type when the payload is not JSON and not text: an image, a
+                PDF, an archive, a serialised message, an already-compressed
+                blob, a key file. The body is never parsed or transcoded, so
+                nothing is assumed about its structure and the bytes are
+                encrypted exactly as they arrive.
+
+                Field mode has no use for this content type, because addressing
+                a field inside a payload requires a JSON document.
+
+                The content type is not recorded in the envelope. On decryption
+                the original bytes are returned under a content type inferred
+                from them, so a caller that needs the exact type it sent must
+                keep that record itself.
+            example: "<the raw bytes of the payload, encrypted whole>"
       responses:
         '200':
           description: |
@@ -1200,8 +2001,10 @@ paths:
             destination answered, relayed with its own status, body and headers,
             and stamped with `X-Qanapi-Forwarded-To`.
           headers:
-            X-Qanapi-Action-Count: { $ref: '#/components/headers/ActionCount' }
-            X-Qanapi-Forwarded-To: { $ref: '#/components/headers/ForwardedTo' }
+            X-Qanapi-Action-Count:
+              $ref: '#/components/headers/ActionCount'
+            X-Qanapi-Forwarded-To:
+              $ref: '#/components/headers/ForwardedTo'
           content:
             application/json:
               schema:
@@ -1215,9 +2018,12 @@ paths:
             text/plain:
               schema:
                 type: string
+                examples: ['QANAPI-RS:v1:MDFhMDg2ZGQ:Vpp6gZK4ZRUwgvpcnA:$']
               example: "QANAPI-RS:v1:MDFhMDg2ZGQ:Vpp6gZK4ZRUwgvpcnA:$"
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '403':
           description: |
             The policy engine refused the action, the caller does not hold the
@@ -1227,7 +2033,8 @@ paths:
             cannot read.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: |
             No configuration has that proxy slug, the presented key is not
@@ -1237,8 +2044,10 @@ paths:
             configurations.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
         '422':
           description: |
             The body is not the JSON that field mode requires, a field path
@@ -1247,17 +2056,22 @@ paths:
             `https` URL that this installation permits.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           description: |
             A forwarding destination was named and could not be reached. The
             cryptography succeeded; the forward did not.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/v3/encryption/{proxy}/decrypt:
+    parameters:
+    - $ref: '#/components/parameters/ProxySlug'
     post:
       tags: [STAND Encryption]
       summary: Decrypt a payload
@@ -1277,7 +2091,6 @@ paths:
         is read from the record.
       operationId: decrypt
       parameters:
-      - $ref: '#/components/parameters/ProxySlug'
       - $ref: '#/components/parameters/Fields'
       - $ref: '#/components/parameters/FullBody'
       - $ref: '#/components/parameters/Mode'
@@ -1289,7 +2102,6 @@ paths:
           application/json:
             schema:
               type: object
-              description: "A JSON object to decrypt fields on.  A maximum depth of 32 is allowed."
               additionalProperties: true
             example: {
               "name": "Jane Doe",
@@ -1302,13 +2114,29 @@ paths:
         '200':
           description: |
             The plaintext, in the shape it was encrypted from. In field mode the
-            document is returned as JSON. In whole-body mode the original bytes
-            are returned under a content type inferred from them:
-            `application/json`, `application/xml`, `text/plain` or
-            `application/octet-stream`.
+            document is returned as JSON.
+
+            In whole-body mode the original bytes are returned exactly as they
+            were before encryption, but the envelope does not record the
+            content type they were sent under, so one is inferred from the
+            bytes themselves, in this order:
+
+            - `application/json` when the body is valid UTF-8, begins with `{`
+              or `[`, and parses as JSON.
+            - `application/xml` when the body is valid UTF-8 and begins with
+              `<?xml` or `<`.
+            - `application/octet-stream` when the body is not valid UTF-8,
+              which is the case for every binary payload.
+            - `text/plain; charset=utf-8` otherwise.
+
+            The inference is a best effort over content, not a record of what
+            was sent. A caller that needs the original content type preserved
+            must carry it alongside the envelope.
           headers:
-            X-Qanapi-Action-Count: { $ref: '#/components/headers/ActionCount' }
-            X-Qanapi-Forwarded-To: { $ref: '#/components/headers/ForwardedTo' }
+            X-Qanapi-Action-Count:
+              $ref: '#/components/headers/ActionCount'
+            X-Qanapi-Forwarded-To:
+              $ref: '#/components/headers/ForwardedTo'
           content:
             application/json:
               schema:
@@ -1320,13 +2148,23 @@ paths:
               }
             text/plain:
               schema: { type: string }
-              example: "123-45-6789"
+              example: "The quick brown fox jumps over the lazy dog."
             application/xml:
               schema: { type: string }
-              example: "123-45-6789"
+              example: |
+                <?xml version="1.0" encoding="UTF-8"?>
+                <customer><ssn>123-45-6789</ssn></customer>
             application/octet-stream:
-              schema: { type: string, format: binary }
-              example: "123-45-6789"
+              schema:
+                type: string
+                format: binary
+                description: |
+                  The original bytes, returned under the catch-all content type
+                  because they are not valid UTF-8 and so cannot be JSON, XML
+                  or text. This is what any binary payload decrypts to: an
+                  image, a PDF, an archive, a serialised message. The bytes are
+                  byte-for-byte what was encrypted; only the label is inferred.
+              example: "<the original bytes, as they were before encryption>"
         '400':
           description: |
             No credential, or the envelope could not be read. Every
@@ -1335,17 +2173,22 @@ paths:
             lookup was what failed.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '403':
           description: |
             The policy engine refused the action, or the caller does not hold
             the clearance the record carries.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '404': { $ref: '#/components/responses/ProxyNotReachable' }
-        '413': { $ref: '#/components/responses/PayloadTooLarge' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/ProxyNotReachable'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
         '422':
           description: |
             The body is not the JSON that field mode requires, a field path
@@ -1354,15 +2197,18 @@ paths:
             this installation permits.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
-        '429': { $ref: '#/components/responses/TooManyRequests' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           description: |
             A forwarding destination was named and could not be reached. The
             cryptography succeeded; the forward did not.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # -------------------------------------------------------------------- kms
 
@@ -1387,9 +2233,10 @@ paths:
       - name: state
         in: query
         description: Restrict to keys in this lifecycle state.
-        schema: { $ref: '#/components/schemas/KeyState' }
+        schema:
+          $ref: '#/components/schemas/KeyState'
       - $ref: '#/components/parameters/Page'
-      - $ref: '#/components/parameters/PerPageTwentyFive'
+      - $ref: '#/components/parameters/PerPage'
       responses:
         '200':
           description: Matching keys, without their material.
@@ -1397,11 +2244,37 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/KmsKeyBrief' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/ConfigurationNotFound' }
+                items:
+                  $ref: '#/components/schemas/KmsKeyBrief'
+              example: [
+                {
+                  "key_id": "6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95",
+                  "name": "Payment tokenization key",
+                  "external_id": "billing-2026-q3",
+                  "type": "AES",
+                  "algorithm": "AES-256",
+                  "cipher_mode": "gcm",
+                  "state": "active",
+                  "created_at": "2026-07-02T10:11:09Z"
+                },
+                {
+                  "key_id": "0c7d4e82-5a19-4b63-8f27-3e91d6b0a458",
+                  "name": "Partner wrap key",
+                  "external_id": null,
+                  "type": "RSA",
+                  "algorithm": "RSA-2048",
+                  "state": "active",
+                  "created_at": "2026-07-02T10:14:36Z"
+                }
+              ]
+        '400':
+                  $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ConfigurationNotFound'
 
   /api/v3/kms/create/{proxy}:
     parameters:
@@ -1428,31 +2301,64 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/CreateKmsKeyRequest' }
+            schema:
+              $ref: '#/components/schemas/CreateKmsKeyRequest'
+            example: {
+              "type": "AES",
+              "key_length": 256,
+              "name": "Payment tokenization key",
+              "external_id": "billing-2026-q3",
+              "usage_mask": [
+                "encrypt",
+                "decrypt"
+              ]
+            }
       responses:
-        '200':
+        '201':
           description: |
             The new key. `private_key_material` is present only when
             `export_on_create` was set and a wrap key was named.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/KmsKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+              example: {
+                "key_id": "6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95",
+                "name": "Payment tokenization key",
+                "external_id": "billing-2026-q3",
+                "type": "AES",
+                "algorithm": "AES-256",
+                "cipher_mode": "gcm",
+                "state": "active",
+                "created_at": "2026-07-02T10:11:09Z",
+                "private_material_retrievable": false,
+                "usage_mask": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "updated_at": "2026-07-02T10:11:09Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '403':
           description: |
             The policy engine refused the action, or the license has lapsed.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '404': { $ref: '#/components/responses/ConfigurationNotFound' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/ConfigurationNotFound'
         '422':
           description: |
             `type`, `algorithm`, a key length or a usage is unsupported, or
             `export_on_create` was set without `wrap_with_key_id`.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   /api/v3/kms/import/{proxy}:
     parameters:
@@ -1473,27 +2379,57 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ImportKmsKeyRequest' }
+            schema:
+              $ref: '#/components/schemas/ImportKmsKeyRequest'
+            example: {
+              "type": "RSA",
+              "algorithm": "rsa-2048",
+              "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnTATjU+xnC35s8Y3TJyq\n...\nswIDAQAB\n-----END PUBLIC KEY-----\n",
+              "name": "Partner wrap key"
+            }
       responses:
-        '200':
+        '201':
           description: The imported key.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/KmsKey' }
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+              example: {
+                "key_id": "0c7d4e82-5a19-4b63-8f27-3e91d6b0a458",
+                "name": "Partner wrap key",
+                "external_id": null,
+                "type": "RSA",
+                "algorithm": "RSA-2048",
+                "state": "active",
+                "created_at": "2026-07-02T10:14:36Z",
+                "private_material_retrievable": true,
+                "usage_mask": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "export_window_expires_at": "2026-12-31T23:59:59Z",
+                "export_count": 0,
+                "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnTATjU+xnC35s8Y3TJyq\n...\nswIDAQAB\n-----END PUBLIC KEY-----\n",
+                "updated_at": "2026-07-02T10:14:36Z"
+              }
         '400':
           description: |
             No credential, or the supplied `jwe` could not be read.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '403':
           description: |
             The policy engine refused the action, or the license has lapsed.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '404': { $ref: '#/components/responses/ConfigurationNotFound' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/ConfigurationNotFound'
         '422':
           description: |
             Neither `jwe` nor `public_key_pem` was given, `type` is missing
@@ -1501,7 +2437,8 @@ paths:
             algorithm it is declared under.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   /api/v3/kms/{uuid}:
     parameters:
@@ -1518,11 +2455,32 @@ paths:
           description: The key.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/KmsKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+              example: {
+                "key_id": "6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95",
+                "name": "Payment tokenization key",
+                "external_id": "billing-2026-q3",
+                "type": "AES",
+                "algorithm": "AES-256",
+                "cipher_mode": "gcm",
+                "state": "active",
+                "created_at": "2026-07-02T10:11:09Z",
+                "private_material_retrievable": false,
+                "usage_mask": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "updated_at": "2026-07-02T10:11:09Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
     patch:
       tags: [STAND KMS]
       summary: Update a KMS key
@@ -1538,24 +2496,52 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/UpdateKmsKeyRequest' }
+            schema:
+              $ref: '#/components/schemas/UpdateKmsKeyRequest'
+            example: {
+              "name": "Payment tokenization key (retired)",
+              "usage_mask": [
+                "decrypt"
+              ]
+            }
       responses:
         '200':
           description: Updated.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/KmsKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+              example: {
+                "key_id": "6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95",
+                "name": "Payment tokenization key (retired)",
+                "external_id": "billing-2026-q3",
+                "type": "AES",
+                "algorithm": "AES-256",
+                "cipher_mode": "gcm",
+                "state": "active",
+                "created_at": "2026-07-02T10:11:09Z",
+                "private_material_retrievable": false,
+                "usage_mask": [
+                  "decrypt"
+                ],
+                "updated_at": "2026-09-17T10:26:30Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '422':
           description: |
             A usage is unrecognised, or `private_material_retrievable` was set
             to true on a key generated without it.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   /api/v3/kms/{uuid}/export:
     parameters:
@@ -1576,28 +2562,59 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ExportKmsKeyRequest' }
+            schema:
+              $ref: '#/components/schemas/ExportKmsKeyRequest'
+            example: {
+              "wrap_with_key_id": "0c7d4e82-5a19-4b63-8f27-3e91d6b0a458"
+            }
       responses:
         '200':
           description: The key, with `private_key_material.jwe` present.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/KmsKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+              example: {
+                "key_id": "0c7d4e82-5a19-4b63-8f27-3e91d6b0a458",
+                "name": "Partner wrap key",
+                "external_id": null,
+                "type": "RSA",
+                "algorithm": "RSA-2048",
+                "state": "active",
+                "created_at": "2026-07-02T10:14:36Z",
+                "private_material_retrievable": true,
+                "usage_mask": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "export_window_expires_at": "2026-12-31T23:59:59Z",
+                "export_count": 1,
+                "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnTATjU+xnC35s8Y3TJyq\n...\nswIDAQAB\n-----END PUBLIC KEY-----\n",
+                "updated_at": "2026-07-02T10:14:36Z",
+                "private_key_material": {
+                  "jwe": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMjU2R0NNIiwia2lkIjoiMGM3ZDRlODIifQ.TdKk1n3Xq...Zg.9pQ2sVbN4mHt.uY7cR1oL...Aw"
+                }
+              }
+        '400':
+                  $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '403':
           description: |
             The key is not marked exportable, its export window has closed, or
             the caller lacks `kms:export`.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: No such key, or `wrap_with_key_id` names no usable RSA key.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
 
   /api/v3/kms/{uuid}/rotate:
     parameters:
@@ -1618,28 +2635,55 @@ paths:
         required: false
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/RotateKmsKeyRequest' }
+            schema:
+              $ref: '#/components/schemas/RotateKmsKeyRequest'
+            example: {
+              "export_on_create": false
+            }
       responses:
         '200':
           description: The replacement key.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/KmsKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+              example: {
+                "key_id": "1f6a3c85-9d24-4b70-8e51-2c7b9f0d63a4",
+                "name": "Payment tokenization key",
+                "external_id": "billing-2026-q3",
+                "type": "AES",
+                "algorithm": "AES-256",
+                "cipher_mode": "gcm",
+                "state": "active",
+                "created_at": "2026-09-17T10:30:12Z",
+                "private_material_retrievable": false,
+                "usage_mask": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "updated_at": "2026-09-17T10:30:12Z",
+                "rotated_from": "6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
         '403':
           description: |
             The policy engine refused the action, or the license has lapsed.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '422':
           description: |
             `export_on_create` was set without `wrap_with_key_id`.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ValidationError' }
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
   /api/v3/kms/{uuid}/revoke:
     parameters:
@@ -1658,22 +2702,49 @@ paths:
         required: false
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/RevokeKmsKeyRequest' }
+            schema:
+              $ref: '#/components/schemas/RevokeKmsKeyRequest'
+            example: {
+              "reason": "Superseded after the quarterly rotation."
+            }
       responses:
         '200':
           description: Revoked.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/KmsKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+              example: {
+                "key_id": "6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95",
+                "name": "Payment tokenization key",
+                "external_id": "billing-2026-q3",
+                "type": "AES",
+                "algorithm": "AES-256",
+                "cipher_mode": "gcm",
+                "state": "revoked",
+                "created_at": "2026-07-02T10:11:09Z",
+                "private_material_retrievable": false,
+                "usage_mask": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "updated_at": "2026-09-17T10:33:58Z",
+                "revoke_reason": "Superseded after the quarterly rotation."
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: The key was already revoked.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/v3/kms/{uuid}/restore:
     parameters:
@@ -1690,16 +2761,38 @@ paths:
           description: Restored to active.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/KmsKey' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema:
+                $ref: '#/components/schemas/KmsKey'
+              example: {
+                "key_id": "6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95",
+                "name": "Payment tokenization key",
+                "external_id": "billing-2026-q3",
+                "type": "AES",
+                "algorithm": "AES-256",
+                "cipher_mode": "gcm",
+                "state": "active",
+                "created_at": "2026-07-02T10:11:09Z",
+                "private_material_retrievable": false,
+                "usage_mask": [
+                  "encrypt",
+                  "decrypt"
+                ],
+                "updated_at": "2026-09-17T10:41:05Z"
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           description: The key is not revoked, so there is nothing to restore.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
   # ------------------------------------------------------------------ audit
 
@@ -1723,7 +2816,7 @@ paths:
       - $ref: '#/components/parameters/AuditRequestId'
       - $ref: '#/components/parameters/AuditInstanceId'
       - $ref: '#/components/parameters/Page'
-      - $ref: '#/components/parameters/PerPageTwentyFive'
+      - $ref: '#/components/parameters/PerPage'
       responses:
         '200':
           description: A page of records.
@@ -1736,10 +2829,152 @@ paths:
                   properties:
                     data:
                       type: array
-                      items: { $ref: '#/components/schemas/AuditRecord' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+                      items:
+                        $ref: '#/components/schemas/AuditRecord'
+              example: {
+                "current_page": 9,
+                "data": [
+                  {
+                    "id": "f4a1c7e0-3b92-4d68-95af-8c206b1d74e3",
+                    "timestamp": "2026-09-17T08:14:02Z",
+                    "request_id": "01K5P8QW3ZRJ7NB4XK",
+                    "instance_id": "node-01",
+                    "principal_type": "api_key",
+                    "principal_id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                    "client_ip": "203.0.113.42",
+                    "user_agent": "billing-service/2.4.1",
+                    "action": "encryption.encrypt",
+                    "resource_type": "configuration",
+                    "resource_id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                    "configuration_id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                    "status": "success",
+                    "status_code": 200,
+                    "error_message": null,
+                    "latency_ms": 12,
+                    "metadata": {
+                      "mode": "fields",
+                      "fields": [
+                        "ssn"
+                      ],
+                      "action_count": 1,
+                      "bytes": 184
+                    },
+                    "record_hash": "b31c0f9a7d64e2158ac0b7f3e91d4a6c25f80be7d3419af6c8025d7be14f39a0",
+                    "previous_record_hash": "0d7f52c8a1e34b96f08d2c5741ba93e6082fc4d5179e3ab06f42d81c9e537b04",
+                    "chain_version": 1,
+                    "created_at": "2026-09-17T08:14:02Z"
+                  },
+                  {
+                    "id": "27ce8b04-6f1d-4a39-81b7-3d05c92eaf68",
+                    "timestamp": "2026-09-17T08:13:44Z",
+                    "request_id": "01K5P8QJ6BMD2TVC9Q",
+                    "instance_id": "node-01",
+                    "principal_type": "api_key",
+                    "principal_id": "c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f",
+                    "client_ip": "203.0.113.42",
+                    "user_agent": "billing-service/2.4.1",
+                    "action": "kms.export",
+                    "resource_type": "key",
+                    "resource_id": "6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95",
+                    "configuration_id": "5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57",
+                    "status": "denied",
+                    "status_code": 403,
+                    "error_message": "Forbidden.",
+                    "latency_ms": 3,
+                    "metadata": {
+                      "reason": "no policy statement allows kms:export on this key"
+                    },
+                    "record_hash": "0d7f52c8a1e34b96f08d2c5741ba93e6082fc4d5179e3ab06f42d81c9e537b04",
+                    "previous_record_hash": "5a9e1b3706c8d24fb0e75318ac46d9e174c0b28f53da96017be4c8f2035d61a9",
+                    "chain_version": 1,
+                    "created_at": "2026-09-17T08:13:44Z"
+                  }
+                ],
+                "first_page_url": "https://qanapi.example.com/api/v3/audit-logs?page=1",
+                "from": 201,
+                "last_page": 9,
+                "last_page_url": "https://qanapi.example.com/api/v3/audit-logs?page=9",
+                "links": [
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=8",
+                    "label": "&laquo; Previous",
+                    "page": 8,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=1",
+                    "label": "1",
+                    "page": 1,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=2",
+                    "label": "2",
+                    "page": 2,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=3",
+                    "label": "3",
+                    "page": 3,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=4",
+                    "label": "4",
+                    "page": 4,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=5",
+                    "label": "5",
+                    "page": 5,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=6",
+                    "label": "6",
+                    "page": 6,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=7",
+                    "label": "7",
+                    "page": 7,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=8",
+                    "label": "8",
+                    "page": 8,
+                    "active": false
+                  },
+                  {
+                    "url": "https://qanapi.example.com/api/v3/audit-logs?page=9",
+                    "label": "9",
+                    "page": 9,
+                    "active": true
+                  },
+                  {
+                    "url": null,
+                    "label": "Next &raquo;",
+                    "page": null,
+                    "active": false
+                  }
+                ],
+                "next_page_url": null,
+                "path": "https://qanapi.example.com/api/v3/audit-logs",
+                "per_page": 25,
+                "prev_page_url": "https://qanapi.example.com/api/v3/audit-logs?page=8",
+                "to": 202,
+                "total": 202
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/v3/audit-logs/export:
     post:
@@ -1767,7 +3002,16 @@ paths:
         required: false
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ExportRequest' }
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+            example: {
+              "from": "2026-09-01T00:00:00Z",
+              "to": "2026-09-30T23:59:59Z",
+              "action": "kms.*",
+              "format": "jsonl",
+              "gzip": true,
+              "purge": false
+            }
       responses:
         '200':
           description: |
@@ -1795,19 +3039,31 @@ paths:
           content:
             application/x-ndjson:
               schema: { type: string }
+              example: |
+                {"id":"f4a1c7e0-3b92-4d68-95af-8c206b1d74e3","timestamp":"2026-09-17T08:14:02Z","request_id":"01K5P8QW3ZRJ7NB4XK","instance_id":"node-01","principal_type":"api_key","principal_id":"c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f","client_ip":"203.0.113.42","user_agent":"billing-service/2.4.1","action":"encryption.encrypt","resource_type":"configuration","resource_id":"5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57","configuration_id":"5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57","status":"success","status_code":200,"error_message":null,"latency_ms":12,"metadata":{"mode":"fields","fields":["ssn"],"action_count":1,"bytes":184},"record_hash":"b31c0f9a7d64e2158ac0b7f3e91d4a6c25f80be7d3419af6c8025d7be14f39a0","previous_record_hash":"0d7f52c8a1e34b96f08d2c5741ba93e6082fc4d5179e3ab06f42d81c9e537b04","chain_version":1,"created_at":"2026-09-17T08:14:02Z"}
+                {"id":"27ce8b04-6f1d-4a39-81b7-3d05c92eaf68","timestamp":"2026-09-17T08:13:44Z","request_id":"01K5P8QJ6BMD2TVC9Q","instance_id":"node-01","principal_type":"api_key","principal_id":"c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f","client_ip":"203.0.113.42","user_agent":"billing-service/2.4.1","action":"kms.export","resource_type":"key","resource_id":"6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95","configuration_id":"5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57","status":"denied","status_code":403,"error_message":"Forbidden.","latency_ms":3,"metadata":{"reason":"no policy statement allows kms:export on this key"},"record_hash":"0d7f52c8a1e34b96f08d2c5741ba93e6082fc4d5179e3ab06f42d81c9e537b04","previous_record_hash":"5a9e1b3706c8d24fb0e75318ac46d9e174c0b28f53da96017be4c8f2035d61a9","chain_version":1,"created_at":"2026-09-17T08:13:44Z"}
             text/csv:
               schema: { type: string }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+              example: |
+                id,timestamp,request_id,instance_id,principal_type,principal_id,client_ip,user_agent,action,resource_type,resource_id,configuration_id,status,status_code,error_message,latency_ms,metadata,record_hash,previous_record_hash
+                f4a1c7e0-3b92-4d68-95af-8c206b1d74e3,2026-09-17T08:14:02+00:00,01K5P8QW3ZRJ7NB4XK,node-01,api_key,c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f,203.0.113.42,billing-service/2.4.1,encryption.encrypt,configuration,5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57,5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57,success,200,,12,"{""mode"":""fields"",""fields"":[""ssn""],""action_count"":1,""bytes"":184}",b31c0f9a7d64e2158ac0b7f3e91d4a6c25f80be7d3419af6c8025d7be14f39a0,0d7f52c8a1e34b96f08d2c5741ba93e6082fc4d5179e3ab06f42d81c9e537b04
+                27ce8b04-6f1d-4a39-81b7-3d05c92eaf68,2026-09-17T08:13:44+00:00,01K5P8QJ6BMD2TVC9Q,node-01,api_key,c2d5f7a1-9b3e-4f82-a6d0-71e4c8b95a3f,203.0.113.42,billing-service/2.4.1,kms.export,key,6b2e9f41-3d7a-48c5-9e12-0a4f6c8d1b95,5e8b1c94-7f2a-4d36-b0c8-9a1e3f6d2b57,denied,403,Forbidden.,3,"{""reason"":""no policy statement allows kms:export on this key""}",0d7f52c8a1e34b96f08d2c5741ba93e6082fc4d5179e3ab06f42d81c9e537b04,5a9e1b3706c8d24fb0e75318ac46d9e174c0b28f53da96017be4c8f2035d61a9
+        '400':
+          $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '409':
           description: |
             The matching records changed while a purging export was running, so
             nothing was purged and nothing was returned. Retry it.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '422': { $ref: '#/components/responses/ValidationFailed' }
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
 
   /api/v3/audit-logs/verify:
     get:
@@ -1844,17 +3100,34 @@ paths:
           description: The chain verified over the range examined.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ChainVerification' }
-        '400': { $ref: '#/components/responses/NoCredential' }
-        '401': { $ref: '#/components/responses/BadCredential' }
-        '403': { $ref: '#/components/responses/Forbidden' }
+              schema:
+                $ref: '#/components/schemas/ChainVerification'
+              example: {
+                "verified": true,
+                "records": 4812,
+                "broken_links": [],
+                "gaps": [
+                  "27ce8b04-6f1d-4a39-81b7-3d05c92eaf68"
+                ],
+                "explained_by_purge": [
+                  "27ce8b04-6f1d-4a39-81b7-3d05c92eaf68"
+                ],
+                "gaps_expected": true
+              }
+        '400':
+                $ref: '#/components/responses/NoCredential'
+        '401':
+          $ref: '#/components/responses/BadCredential'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '409':
           description: |
             The chain did not verify. The body is the same summary, naming what
             failed.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ChainVerification' }
+              schema:
+                $ref: '#/components/schemas/ChainVerification'
 
   # -------------------------------------------------------------- transport
 
@@ -1879,12 +3152,22 @@ paths:
           description: The current public key.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/QanapiKey' }
+              schema:
+                $ref: '#/components/schemas/QanapiKey'
+              example: {
+                "key_id": "QANAPI-PUB-1DAF66C2",
+                "algorithm": "RSA-2048",
+                "public_key_material": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnTATjU+xnC35s8Y3TJyq\n...\nswIDAQAB\n-----END PUBLIC KEY-----\n",
+                "rotates_after": "2027-02-14T18:36:31Z",
+                "expires_at": "2027-03-16T18:36:31Z",
+                "created_at": "2026-09-17T18:36:31Z"
+              }
         '404':
           description: No key pair has been provisioned.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
 
@@ -1968,16 +3251,8 @@ components:
       in: query
       description: |
         Rows per page. A larger figure is reduced to the maximum rather than
-        refused.
+        refused. The same default applies to every paginated endpoint.
       schema: { type: integer, minimum: 1, maximum: 200, default: 15 }
-    PerPageTwentyFive:
-      name: per_page
-      in: query
-      description: |
-        Rows per page. A larger figure is reduced to the maximum rather than
-        refused. Note the default differs from the one on
-        `GET /api/v3/classifications`.
-      schema: { type: integer, minimum: 1, maximum: 200, default: 25 }
 
     AuditFrom:
       name: from
@@ -2039,8 +3314,13 @@ components:
       in: header
       description: |
         Comma-separated dot paths to encrypt or decrypt, for example
-        `ssn,user.address.postcode`. Absent in whole-body mode. A path that
-        matches nothing is skipped unless `X-Qanapi-Require-Fields` is set.
+        `ssn,user.address.postcode`. A path that matches nothing is skipped
+        unless `X-Qanapi-Require-Fields` is set.
+
+        Required unless whole-body mode is selected with `X-Qanapi-Full-Body`
+        or `X-Qanapi-Mode`. A call that names no fields and asks for no
+        whole-body mode would encrypt nothing, so it answers `422` rather than
+        returning the document untouched under a success code.
 
         A numeric segment indexes one element of an array, so `items.0.card`
         reaches exactly that element. A segment that is not a number, applied to
@@ -2124,37 +3404,67 @@ components:
         `X-Qanapi-Authorization`, or a bearer token in `Authorization`.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "Unauthorized.",
+            "error": "Unauthenticated"
+          }
     BadCredential:
       description: A credential was presented and did not verify.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "Unauthorized.",
+            "error": "InvalidApiKeyException"
+          }
     Forbidden:
       description: |
         Authenticated, but not permitted. Also returned for a revoked API key.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "Invalid permission to perform action",
+            "error": "AccessDenied"
+          }
     NotFound:
       description: No such record.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "Resource not found.",
+            "error": "NotFound"
+          }
     NotFoundOrNotYours:
       description: |
         No such key, or it belongs to another user and the caller does not hold
         `apikey:manage`. The two are deliberately not distinguished.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "API key not found",
+            "error": "ApiKeyNotFoundException"
+          }
     ConfigurationNotFound:
       description: |
         No configuration has that proxy slug, or this credential may not reach
         it.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "Configuration not found for proxy.",
+            "error": "ConfigurationNotFoundException"
+          }
     ProxyNotReachable:
       description: |
         Reported as a missing API key. The answer is deliberately the same
@@ -2163,7 +3473,8 @@ components:
         configurations.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
           example: {
             "message": "API key not found",
             "error": "ApiKeyNotFoundException"
@@ -2172,28 +3483,55 @@ components:
       description: The request conflicts with the current state of the resource.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "Conflict: That email address is already registered.",
+            "error": "Conflict"
+          }
     ValidationFailed:
       description: |
         The request body or a parameter is invalid. `message` is always
         `Validation failed`; the specifics are in `errors`, keyed by field.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/ValidationError' }
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+          example: {
+            "message": "Validation failed",
+            "error": "ValidationException",
+            "errors": {
+              "request": [
+                "Password must be at least 12 characters long."
+              ]
+            }
+          }
     PayloadTooLarge:
       description: |
         The body exceeded the installation's ceiling, 10 MB by default.
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "Payload too large.",
+            "error": "PayloadTooLarge"
+          }
     TooManyRequests:
       description: The rate limit for this client address was exhausted.
       headers:
-        X-RateLimit-Limit: { $ref: '#/components/headers/RateLimitLimit' }
-        X-RateLimit-Remaining: { $ref: '#/components/headers/RateLimitRemaining' }
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/RateLimitLimit'
+        X-RateLimit-Remaining:
+          $ref: '#/components/headers/RateLimitRemaining'
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema:
+            $ref: '#/components/schemas/Error'
+          example: {
+            "message": "Too many requests.",
+            "error": "TooManyRequests"
+          }
 
   schemas:
 
@@ -2317,7 +3655,8 @@ components:
         token: { type: string, description: A signed JWT. }
         token_type: { type: string, const: Bearer }
         expires_in: { type: integer, description: Seconds until expiry. }
-        user: { $ref: '#/components/schemas/User' }
+        user:
+          $ref: '#/components/schemas/User'
 
     CreateUserRequest:
       type: object
@@ -2568,7 +3907,8 @@ components:
       type: object
       required: [principal_type, principal_id]
       properties:
-        principal_type: { $ref: '#/components/schemas/PrincipalType' }
+        principal_type:
+          $ref: '#/components/schemas/PrincipalType'
         principal_id:
           type: string
           description: |
@@ -2590,7 +3930,8 @@ components:
           description: |
             Deny always wins, and the default with no statement at all is to
             refuse.
-        principal_type: { $ref: '#/components/schemas/PrincipalType' }
+        principal_type:
+              $ref: '#/components/schemas/PrincipalType'
         principal_id:
           type: string
           description: |
@@ -2599,11 +3940,13 @@ components:
         actions:
           type: array
           minItems: 1
-          items: { $ref: '#/components/schemas/PolicyAction' }
+          items:
+            $ref: '#/components/schemas/PolicyAction'
         resources:
           type: array
           minItems: 1
-          items: { $ref: '#/components/schemas/PolicyResource' }
+          items:
+            $ref: '#/components/schemas/PolicyResource'
         created_at: { type: string, format: date-time }
 
     PolicyAction:
@@ -2663,18 +4006,21 @@ components:
           description: Trimmed, and may not be empty once trimmed.
         description: { type: string }
         effect: { type: string, enum: [allow, deny] }
-        principal_type: { $ref: '#/components/schemas/PrincipalType' }
+        principal_type:
+          $ref: '#/components/schemas/PrincipalType'
         principal_id: { type: string }
         actions:
           type: array
           minItems: 1
           description: Duplicates are collapsed.
-          items: { $ref: '#/components/schemas/PolicyAction' }
+          items:
+            $ref: '#/components/schemas/PolicyAction'
         resources:
           type: array
           minItems: 1
           description: Duplicates are collapsed.
-          items: { $ref: '#/components/schemas/PolicyResource' }
+          items:
+            $ref: '#/components/schemas/PolicyResource'
 
     # ----------------------------------------------------------------- kms
 
@@ -2706,7 +4052,8 @@ components:
           enum: [gcm, cbc]
           description: |
             The AES mode. Absent for an RSA key, which has none.
-        state: { $ref: '#/components/schemas/KeyState' }
+        state:
+              $ref: '#/components/schemas/KeyState'
         created_at: { type: string, format: date-time }
 
     KmsKey:
