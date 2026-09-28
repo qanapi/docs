@@ -60,6 +60,7 @@
             "group": "Qanapi Flow",
             "pages": [
               "qanapi-flow/purchase",
+              "qanapi-flow/guided-setup",
               "qanapi-flow/smime",
               "qanapi-flow/live-redaction"
             ]
