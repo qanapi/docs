@@ -1,0 +1,26 @@
+# Blocks the commit if Mintlify finds broken links or an invalid build.
+# Installed automatically by `npm install` (husky "prepare" script).
+# Bypass in an emergency with: git commit --no-verify
+#
+# Change log
+#   v1.1 (2026-10-01): moved from .githooks to husky so it installs itself.
+#   v1.0 (2026-10-01): mint broken-links (anchors, snippets, redirects) and mint validate.
+
+# Only run when files that affect the docs site are staged.
+if ! git diff --cached --name-only --diff-filter=ACMRD | grep -qE '\.(mdx?|json|ya?ml)$'; then
+  exit 0
+fi
+
+failed=0
+
+echo "pre-commit: mint broken-links"
+npx --no-install mint broken-links --check-anchors --check-snippets --check-redirects || failed=1
+
+echo "pre-commit: mint validate"
+npx --no-install mint validate || failed=1
+
+if [ "$failed" -ne 0 ]; then
+  echo
+  echo "Commit blocked: fix the Mintlify errors above, or use --no-verify to bypass."
+  exit 1
+fi

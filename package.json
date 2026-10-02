@@ -1,0 +1,13 @@
+{
+  "name": "qanapi-docs",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "dev": "mint dev",
+    "check": "mint broken-links --check-anchors --check-snippets --check-redirects && mint validate"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "mint": "^4.2.970"
+  }
+}

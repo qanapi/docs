@@ -1,0 +1,42 @@
+# Docs check: runs the same Mintlify checks as the husky pre-commit hook,
+# so changes from clones without the hook are still caught before merge.
+#
+# Change log
+#   v1.0 (2026-10-01): initial version. mint broken-links (anchors, snippets,
+#   redirects) and mint validate via `npm run check`.
+
+name: Docs check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Mintlify checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HUSKY: "0" # Git hooks are not needed in CI.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Broken links and build validation
+        run: npm run check
