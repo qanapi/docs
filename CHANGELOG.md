@@ -7,7 +7,7 @@ All notable changes to the Qanapi documentation site (https://docs.qanapi.com) a
 ### Added
 
 - This changelog, following the Qanapi changelog rules.
-- Release announcements in Slack. After Mintlify deploys `main`, the `release-announcement.yml` workflow asks IntegrationManager to announce the newest release in this changelog.
+- Release announcements in Slack. After each push to `main`, the `release-announcement.yml` workflow waits for Mintlify to finish, then asks IntegrationManager to announce the newest release in this changelog. A failed Mintlify deployment is not announced.
 
 ## [1.2.1] - 2026-10-01
 
