@@ -1,0 +1,100 @@
+# Release announcement: after each push to main, waits for Mintlify to
+# finish, then asks IntegrationManager to announce the newest CHANGELOG.md
+# release in Slack. IntegrationManager posts each version only once, so
+# running after every push is safe.
+#
+# Mintlify skips deployments when no documentation pages changed (for
+# example a commit that only edits CHANGELOG.md), so this waits for the
+# "Mintlify Deployment" check on the pushed commit instead of a deployment.
+# A deployed or skipped check means the site is current and the release is
+# announced. A failed or cancelled check is not announced.
+#
+# Needs two repository secrets:
+#   PROJECT_UPDATES_SECRET: same value as the OneDev job secret
+#   PROJECT_UPDATES_SECRET in IntegrationManager.
+#   PROJECT_UPDATES_URL: the full IntegrationManager release webhook URL
+#   for this project.
+#
+# Change log
+#   v1.2 (2026-10-22): read the webhook URL from the PROJECT_UPDATES_URL
+#   secret instead of keeping it in the repository.
+#   v1.1 (2026-10-13): run on push and wait for the Mintlify Deployment check,
+#   because Mintlify skips deployments for changelog-only commits.
+#   v1.0 (2026-10-13): initial version, triggered by Mintlify deployments.
+
+name: Release announcement
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: read
+
+concurrency:
+  group: release-announcement-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  announce:
+    name: Announce release in Slack
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Wait for the Mintlify deployment
+        id: mintlify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          # Poll the "Mintlify Deployment" check for this commit, up to 20 minutes.
+          for attempt in $(seq 1 80); do
+            result=$(gh api "repos/$REPO/commits/$SHA/check-runs?check_name=Mintlify%20Deployment" \
+              --jq '.check_runs[0] // {} | "\(.status // "none") \(.conclusion // "none")"' || echo "none none")
+            status=${result%% *}
+            conclusion=${result##* }
+            if [ "$status" = "completed" ]; then
+              echo "Mintlify Deployment finished: $conclusion"
+              echo "conclusion=$conclusion" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Waiting for Mintlify (status: $status)..."
+            sleep 15
+          done
+          echo "::error::Timed out waiting for the Mintlify Deployment check."
+          exit 1
+
+      - name: Call the IntegrationManager release webhook
+        if: steps.mintlify.outputs.conclusion == 'success' || steps.mintlify.outputs.conclusion == 'skipped'
+        env:
+          SECRET: ${{ secrets.PROJECT_UPDATES_SECRET }}
+          COMMIT: ${{ github.sha }}
+          URL: ${{ secrets.PROJECT_UPDATES_URL }}
+        run: |
+          if [ -z "$URL" ]; then
+            echo "::error::The PROJECT_UPDATES_URL repository secret is not set."
+            exit 1
+          fi
+          status=$(curl -sS -o response.json -w "%{http_code}" -X POST \
+            --retry 3 --retry-delay 10 --retry-connrefused \
+            -H "X-Project-Updates-Secret: $SECRET" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d "{\"commit\": \"$COMMIT\"}" \
+            "$URL")
+          cat response.json
+          echo
+          case "$status" in
+            202) echo "Release announcement queued." ;;
+            422) echo "::notice::Release announcements are off for Qanapi Docs. Skipping." ;;
+            *) echo "::error::Release announcement failed with HTTP $status."; exit 1 ;;
+          esac
+
+      - name: Report a failed deployment
+        if: steps.mintlify.outputs.conclusion != 'success' && steps.mintlify.outputs.conclusion != 'skipped'
+        env:
+          CONCLUSION: ${{ steps.mintlify.outputs.conclusion }}
+        run: echo "::warning::The Mintlify deployment ended as '$CONCLUSION', so the release was not announced."
