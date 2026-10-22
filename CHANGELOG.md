@@ -1,19 +1,31 @@
 # Changelog
 
-All notable changes to the Qanapi documentation site (https://docs.qanapi.com) are documented in this file. Versions up to 1.2.1 were assigned from the commit history when this file was created on 2026-10-13, and each of those dates is the date of the last commit in that release.
+All notable changes to the Qanapi documentation site (https://docs.qanapi.com) are documented in this file. Versions up
+to 1.2.1 were assigned from the commit history when this file was created on 2026-10-13, and each of those dates is the
+date of the last commit in that release.
+
+## [1.4.0] - 2026-10-22
+
+### Added
+
+- The `QanapiFlowLog` schema in the API reference now includes an optional `metadata` object with the
+  `google_resource_id` and `smime_message_id` fields.
 
 ## [1.3.0] - 2026-10-13
 
 ### Added
 
 - This changelog, following the Qanapi changelog rules.
-- Release announcements in Slack. After each push to `main`, the `release-announcement.yml` workflow waits for Mintlify to finish, then asks IntegrationManager to announce the newest release in this changelog. A failed Mintlify deployment is not announced.
+- Release announcements in Slack. After each push to `main`, the `release-announcement.yml` workflow waits for
+  Mintlify to finish, then asks IntegrationManager to announce the newest release in this changelog. A failed Mintlify
+  deployment is not announced.
 
 ## [1.2.1] - 2026-10-01
 
 ### Changed
 
-- Every change is now checked for broken links, anchors, snippets, and redirects, and for a valid Mintlify configuration, by a pre-commit hook and by the "Docs check" GitHub Actions workflow before it is merged.
+- Every change is now checked for broken links, anchors, snippets, and redirects, and for a valid Mintlify
+  configuration, by a pre-commit hook and by the "Docs check" GitHub Actions workflow before it is merged.
 
 ### Fixed
 
@@ -21,14 +33,17 @@ All notable changes to the Qanapi documentation site (https://docs.qanapi.com) a
 
 ## [1.2.0] - 2026-09-28
 
-Qanapi Flow gains purchasing, guided setup, and live redaction guides, and the API reference adds the self-hosted Standalone API v3.
+Qanapi Flow gains purchasing, guided setup, and live redaction guides, and the API reference adds the self-hosted
+Standalone API v3.
 
 ### Added
 
 - Live Redaction guide, with screenshots for converting existing integrations to the new URLs.
 - "Purchasing Qanapi Flow" guide.
 - Guided Setup guide for getting started with a Qanapi Flow bundle.
-- Standalone API v3 reference ("3.x - Stand Alone"), covering the self-hosted service: encryption, classifications, policies, authentication, users, configurations, API keys, health, KMS, audit, and transport, with overview and custom headers pages.
+- Standalone API v3 reference ("3.x - Stand Alone"), covering the self-hosted service: encryption, classifications,
+  policies, authentication, users, configurations, API keys, health, KMS, audit, and transport, with overview and
+  custom headers pages.
 
 ### Changed
 
@@ -44,7 +59,8 @@ Qanapi Flow gains purchasing, guided setup, and live redaction guides, and the A
 
 ### Changed
 
-- The API v2 and v3 references now come from one OpenAPI specification, and API v3 routes are shown with their `/v3/` prefix.
+- The API v2 and v3 references now come from one OpenAPI specification, and API v3 routes are shown with their
+  `/v3/` prefix.
 
 ### Fixed
 
@@ -52,7 +68,8 @@ Qanapi Flow gains purchasing, guided setup, and live redaction guides, and the A
 
 ## [1.0.0] - 2026-07-31
 
-The documentation is rebuilt around the API, with separate Documentation and API Reference tabs and an OpenAPI based reference for every API version.
+The documentation is rebuilt around the API, with separate Documentation and API Reference tabs and an OpenAPI based
+reference for every API version.
 
 ### Added
 
@@ -66,15 +83,19 @@ The documentation is rebuilt around the API, with separate Documentation and API
 
 ### Changed
 
-- The quickstart explains where to find the API key for the `X-Qanapi-Authorization` header and the proxy slug used by the encrypt and decrypt routes.
+- The quickstart explains where to find the API key for the `X-Qanapi-Authorization` header and the proxy slug used
+  by the encrypt and decrypt routes.
 - Encryption containers are now called configurations throughout the documentation.
-- The encrypt and decrypt references explain dot notation for nested fields, the maximum JSON depth of 32, and that the fields to decrypt are required.
+- The encrypt and decrypt references explain dot notation for nested fields, the maximum JSON depth of 32, and that
+  the fields to decrypt are required.
 - API v1 responses now match the actual API.
 - New fonts, scrollbar styling, and route alignment in the sidebar.
 
 ### Removed
 
-- **Breaking:** The original guide pages (registration, dashboard navigation, creating projects, project management, administration, and the data proxy guides and examples) were removed in favor of the new Get Started pages and API reference. Links to those pages no longer work.
+- **Breaking:** The original guide pages (registration, dashboard navigation, creating projects, project management,
+  administration, and the data proxy guides and examples) were removed in favor of the new Get Started pages and API
+  reference. Links to those pages no longer work.
 
 ## [0.2.1] - 2026-04-22
 
@@ -90,7 +111,8 @@ The documentation is rebuilt around the API, with separate Documentation and API
 
 ### Added
 
-- API v2 documentation: quick start, setup, authentication, encryption, decryption, links, and security, with OpenAPI specifications.
+- API v2 documentation: quick start, setup, authentication, encryption, decryption, links, and security, with
+  OpenAPI specifications.
 
 ### Changed
 

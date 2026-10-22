@@ -1570,6 +1570,16 @@ components:
         created_at:
           type: string
           format: date-time
+        metadata:
+          type: object
+          nullable: true
+          properties:
+            google_resource_id:
+              type: string
+              nullable: true
+            smime_message_id:
+              type: string
+              nullable: true
     UnifiedLog:
       type: object
       properties:
